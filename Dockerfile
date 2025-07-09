@@ -17,7 +17,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -o main .
 
 # ---- Production Stage ----
-FROM alpine:latest
+FROM kroniak/ssh-client
 
 # 安装ca-certificates用于HTTPS请求
 # RUN apk --no-cache add ca-certificates

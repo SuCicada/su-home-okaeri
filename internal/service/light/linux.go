@@ -1,6 +1,7 @@
 package light
 
 import (
+	"SuCicada/home/internal/logger"
 	"SuCicada/home/internal/util"
 	"fmt"
 	"os"
@@ -13,29 +14,37 @@ var LinuxLight = &sLinuxLight{}
 const HIGH_LIGHT = 100
 const LOW_LIGHT = 10
 
-func (l *sLinuxLight) sshLinux(cmd string) string {
+func (l *sLinuxLight) sshLinux(cmd string) (string, error) {
 	return util.SSHRunRoot(util.SSHConfig{
 		Host:     os.Getenv("LINUX_HOST"),
 		User:     os.Getenv("LINUX_USER"),
 		Password: os.Getenv("LINUX_PASSWORD"),
 	}, cmd)
 }
-func (l *sLinuxLight) Get() int {
-	res := l.sshLinux(`
+
+func (l *sLinuxLight) Get() (int, error) {
+	res, err := l.sshLinux(`
 		ddcutil --bus=5 getvcp 10 | grep -i "current value" | awk '{print $9}' | tr -d ','
 	`)
-	return util.StrToInt(res)
+	if err != nil {
+		logger.Error("Error getting light:", err)
+		return 0, err
+	}
+	return util.StrToInt(res), nil
 }
 
-func (l *sLinuxLight) Toggle() {
-	light := l.Get()
+func (l *sLinuxLight) Toggle() (string, error) {
+	light, err := l.Get()
+	if err != nil {
+		return "", err
+	}
 	if light < HIGH_LIGHT {
-		l.Set(HIGH_LIGHT)
+		return l.Set(HIGH_LIGHT)
 	} else {
-		l.Set(LOW_LIGHT)
+		return l.Set(LOW_LIGHT)
 	}
 }
 
-func (l *sLinuxLight) Set(light int) {
-	l.sshLinux(fmt.Sprintf("ddcutil --bus=5 setvcp 10 %d", light))
+func (l *sLinuxLight) Set(light int) (string, error) {
+	return l.sshLinux(fmt.Sprintf("ddcutil --bus=5 setvcp 10 %d", light))
 }

@@ -15,14 +15,14 @@ type SSHConfig struct {
 	Password string
 }
 
-func SSHRunRoot(config SSHConfig, cmd string) string {
+func SSHRunRoot(config SSHConfig, cmd string) (string, error) {
 	return runSSH(config, cmd, true)
 }
-func SSHRun(config SSHConfig, cmd string) string {
+func SSHRun(config SSHConfig, cmd string) (string, error) {
 	return runSSH(config, cmd, false)
 }
 
-func runSSH(config SSHConfig, cmd string, sudo bool) string {
+func runSSH(config SSHConfig, cmd string, sudo bool) (string, error) {
 	if config.Port == 0 {
 		config.Port = 22
 	}
@@ -41,13 +41,15 @@ func runSSH(config SSHConfig, cmd string, sudo bool) string {
 	if config.Port > 0 {
 		args = append(args, "-p", strconv.Itoa(config.Port))
 	}
+	args = append(args, "-o", "StrictHostKeyChecking=no")
+	// args = append(args, "-o", "UserKnownHostsFile=/dev/null")
 	args = append(args, host, cmd)
 	output, err := exec.Command("ssh", args...).
 		CombinedOutput()
-	fmt.Println("Output of SSH command:", string(output))
+	var result = string(output)
+	logger.Info("Output of SSH command:", result)
 	if err != nil {
-		fmt.Println("Error executing SSH command:", err)
-		return err.Error()
+		logger.Error("Error executing SSH command:", err)
 	}
-	return string(output)
+	return result, err
 }

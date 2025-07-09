@@ -1,2 +1,3 @@
-docker-su-home-okaeri:
-	$(call deploy_docker_compose, su-home-okaeri)
+deploy:
+	cd /Users/peng/PROGRAM/GitHub/SuConfig/linux/asus &&\
+	make docker-su-home-okaeri

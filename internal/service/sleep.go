@@ -25,18 +25,26 @@ func SetLight(c *gin.Context) {
 	switch device {
 	case "linux":
 		lightDevice = light.LinuxLight
+
 	case "redmi":
 		lightDevice = light.RedmiLight
+
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid device"})
 		return
 	}
 
+	var result string
+	var err error
 	if req.Light > 0 {
-		lightDevice.Set(req.Light)
+		result, err = lightDevice.Set(req.Light)
 	} else {
-		lightDevice.Toggle()
+		result, err = lightDevice.Toggle()
 	}
 
-	c.JSON(http.StatusOK, gin.H{"ok": true})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "result": result, "error": err.Error()})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"ok": true, "result": result})
+	}
 }
