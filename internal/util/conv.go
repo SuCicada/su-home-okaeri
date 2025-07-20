@@ -15,6 +15,7 @@ func StrToInt(v string) int {
 	}
 	return i
 }
+
 func GetInt(key string) int {
 	v := os.Getenv(key)
 	if v == "" {

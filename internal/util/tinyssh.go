@@ -1,6 +1,7 @@
 package util
 
 import (
+	"SuCicada/home/internal/cfg"
 	"SuCicada/home/internal/logger"
 	"fmt"
 	"os/exec"
@@ -8,21 +9,15 @@ import (
 	"strings"
 )
 
-type SSHConfig struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-}
-
-func SSHRunRoot(config SSHConfig, cmd string) (string, error) {
+func SSHRunRoot(config cfg.SSHConfig, cmd string) (string, error) {
 	return runSSH(config, cmd, true)
 }
-func SSHRun(config SSHConfig, cmd string) (string, error) {
+
+func SSHRun(config cfg.SSHConfig, cmd string) (string, error) {
 	return runSSH(config, cmd, false)
 }
 
-func runSSH(config SSHConfig, cmd string, sudo bool) (string, error) {
+func runSSH(config cfg.SSHConfig, cmd string, sudo bool) (string, error) {
 	if config.Port == 0 {
 		config.Port = 22
 	}

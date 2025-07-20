@@ -10,5 +10,5 @@ func GetRoute(r *gin.Engine) {
 	r.POST("/sleep", service.Sleep)
 
 	// light := r.Group("/light/:type")
-	r.POST("/light/:device", service.SetLight)
+	r.POST("/control/:device", service.SetValue)
 }
