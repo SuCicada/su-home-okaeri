@@ -7,37 +7,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type DeviceConfig struct {
-	SSH     SSHConfig     `yaml:"ssh"`
-	Control DeviceControl `yaml:"control"`
-	// Value struct {
-	// Light  int `yaml:"light"`
-	// Volume int `yaml:"volume"`
-	// } `yaml:"value"`
-}
-type DeviceControl map[string]Value
-type Value struct {
-	High int `yaml:"high"`
-	Low  int `yaml:"low"`
-}
-
-type SSHConfig struct {
-	Host     string `yaml:"host"`
-	User     string `yaml:"user"`
-	Port     int    `yaml:"port"`
-	Password string `yaml:"password"`
-}
-
-// 应用配置结构体
-type AppConfig struct {
-	// SSH struct {
-	// 	Linux   SSHHostConfig `yaml:"linux"`
-	// 	Redmi   SSHHostConfig `yaml:"redmi"`
-	// 	Windows SSHHostConfig `yaml:"windows"`
-	// } `yaml:"ssh"`
-	Devices map[string]DeviceConfig `yaml:"devices"`
-}
-
 // var (
 // 	config *AppConfig
 // 	// configOnce sync.Once

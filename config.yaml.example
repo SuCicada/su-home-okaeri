@@ -1,0 +1,39 @@
+devices:
+  linux:
+    ssh:
+      host: ''
+      user: ''
+      password: ''
+      port: 22
+    control:
+      volume:
+        high: 50
+        low: 5
+        options:
+          pactl: 3
+      light:
+        high: 100
+        low: 10
+  redmi:
+    ssh:
+      host: ''
+      user: ''
+      port: 8022
+    control:
+      light:
+        high: 100
+        low: 10
+  windows:
+    ssh:
+      host: ''
+      user: ''
+      port: 22
+    control:
+      volume:
+        high: 20
+        low: 5
+sms_check:
+  push_url: https://xxxxxxxx
+  secret: xxxxxxxx
+alert:
+  apprise: https://xxxxxxxx

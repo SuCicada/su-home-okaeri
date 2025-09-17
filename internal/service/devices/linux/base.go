@@ -22,8 +22,10 @@ var Device = devices.DeviceBase{
 	},
 }
 
+var Config = cfg.GetDeviceConfig(Device.Name)
+
 func sshLinux(cmd string) (string, error) {
-	return util.SSHRunRoot(cfg.GetSSHConfig("linux"), cmd)
+	return util.SSHRunRoot(cfg.GetSSHConfig(Device.Name), cmd)
 }
 
 // func (l *sLinuxLight) Get() (int, error) {
