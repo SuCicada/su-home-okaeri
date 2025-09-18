@@ -3,9 +3,10 @@ package devices
 import (
 	"SuCicada/home/internal/cfg"
 	"SuCicada/home/internal/logger"
+	"SuCicada/home/internal/structs/appconfig"
 )
 
-func GetDeviceControlConfig(deviceName string) cfg.DeviceControl {
+func GetDeviceControlConfig(deviceName string) appconfig.DeviceControl {
 	device := cfg.GetConfig().Devices[deviceName]
 	return device.Control
 }

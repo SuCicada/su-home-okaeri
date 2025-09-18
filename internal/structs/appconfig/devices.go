@@ -1,4 +1,4 @@
-package cfg
+package appconfig
 
 type DeviceConfig struct {
 	SSH     SSHConfig     `yaml:"ssh"`

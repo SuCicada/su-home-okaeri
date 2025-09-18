@@ -1,4 +1,4 @@
-package cfg
+package appconfig
 
 type SMSCheckConfig struct {
 	PushUrl string `yaml:"push_url"`

@@ -1,4 +1,4 @@
-package cfg
+package appconfig
 
 type AppConfig struct {
 	Devices  map[string]DeviceConfig `yaml:"devices"`

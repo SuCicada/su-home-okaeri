@@ -2,6 +2,7 @@ package devices
 
 import (
 	"SuCicada/home/internal/cfg"
+	"SuCicada/home/internal/structs/appconfig"
 	"reflect"
 	"strings"
 )
@@ -65,7 +66,7 @@ func (d *Control) Toggle() error {
 	}
 	return d.Control.Set(newValue)
 }
-func (d *Control) GetValue() cfg.Value {
+func (d *Control) GetValue() appconfig.Value {
 	device := cfg.GetConfig().Devices[d.Device.Name]
 	control := device.Control[d.Name]
 	return control

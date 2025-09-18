@@ -2,6 +2,7 @@ package cfg
 
 import (
 	"SuCicada/home/internal/logger"
+	"SuCicada/home/internal/structs/appconfig"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -13,10 +14,10 @@ import (
 // )
 
 // LoadConfig 加载YAML配置文件
-func LoadConfig(configPath string) (*AppConfig, error) {
+func LoadConfig(configPath string) (*appconfig.AppConfig, error) {
 	var err error
 	// configOnce.Do(func() {
-	var config = &AppConfig{}
+	var config = &appconfig.AppConfig{}
 
 	yamlFile, _err := os.ReadFile(configPath)
 	err = _err
@@ -35,9 +36,9 @@ func LoadConfig(configPath string) (*AppConfig, error) {
 	return config, nil
 }
 
-var preConfig *AppConfig
+var preConfig *appconfig.AppConfig
 
-func GetConfig() *AppConfig {
+func GetConfig() *appconfig.AppConfig {
 	var config, err = LoadConfig("config.yaml")
 	if err != nil {
 		logger.Error("load config error: ", err)
@@ -46,10 +47,10 @@ func GetConfig() *AppConfig {
 	preConfig = config
 	return config
 }
-func GetSSHConfig(device string) SSHConfig {
+func GetSSHConfig(device string) appconfig.SSHConfig {
 	return GetDeviceConfig(device).SSH
 }
 
-func GetDeviceConfig(device string) DeviceConfig {
+func GetDeviceConfig(device string) appconfig.DeviceConfig {
 	return GetConfig().Devices[device]
 }
