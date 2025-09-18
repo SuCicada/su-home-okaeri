@@ -1,5 +1,5 @@
 deploy:
-	cd /Users/peng/PROGRAM/GitHub/SuConfig/linux/asus &&\
+	cd ../SuConfig/linux/asus &&\
 	make docker-su-home-okaeri
 
 dev:
