@@ -37,9 +37,10 @@ func LoadConfig(configPath string) (*appconfig.AppConfig, error) {
 }
 
 var preConfig *appconfig.AppConfig
+var CONFIG_PATH = "config.yaml"
 
 func GetConfig() *appconfig.AppConfig {
-	var config, err = LoadConfig("config.yaml")
+	var config, err = LoadConfig(CONFIG_PATH)
 	if err != nil {
 		logger.Error("load config error: ", err)
 		return preConfig

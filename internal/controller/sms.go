@@ -80,7 +80,7 @@ func (c *cSmsCheck) CheckSMS(ctx *gin.Context) {
 	}
 
 	text := string(body)
-	if checkSMS(text) {
+	if DoCheckSMS(text) == false {
 		log.Println("检查失败：未收到预期的验证消息或验证超时")
 		util.Alert.SendApprise(apprise.Message{
 			Title: "❌[132短信] inactive",
@@ -95,7 +95,7 @@ func (c *cSmsCheck) CheckSMS(ctx *gin.Context) {
 	}
 }
 
-func checkSMS(text string) bool {
+func DoCheckSMS(text string) bool {
 	re := regexp.MustCompile(`【Spug推送】(.+)欢迎您，您的验证码为(\d{6})`)
 	match := re.FindStringSubmatch(text)
 	if len(match) != 3 {
