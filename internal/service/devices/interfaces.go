@@ -49,6 +49,7 @@ func (d *DeviceControlUnit) GetControl(name string) *Control {
 type Control struct {
 	Name    string
 	Device  *DeviceBase
+	MqttId  string
 	Control ControllerInterface
 }
 

@@ -5,6 +5,7 @@ import (
 	"SuCicada/home/internal/structs/appconfig"
 	"os"
 
+	"github.com/gookit/goutil"
 	"gopkg.in/yaml.v3"
 )
 
@@ -48,10 +49,22 @@ func GetConfig() *appconfig.AppConfig {
 	preConfig = config
 	return config
 }
+func GetMqttConfig() appconfig.MqttConfig {
+	return GetConfig().MQTT
+}
 func GetSSHConfig(device string) appconfig.SSHConfig {
 	return GetDeviceConfig(device).SSH
 }
 
 func GetDeviceConfig(device string) appconfig.DeviceConfig {
 	return GetConfig().Devices[device]
+}
+
+func GetInt(key string) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return 0
+	}
+
+	return goutil.Int(v)
 }

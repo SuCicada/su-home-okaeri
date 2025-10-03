@@ -16,7 +16,7 @@ func (l *sWindowsVolume) Get() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	return util.StrToInt(res), nil
+	return util.Conv.StrToInt(res), nil
 }
 
 func (l *sWindowsVolume) Set(volume int) error {

@@ -8,7 +8,7 @@ import (
 
 type sVolume struct{}
 
-var Volume = &sVolume{}
+//var Volume = &sVolume{}
 
 func getPactlOpts() int {
 	options := Config.Control[consts.CONTROL_VOLUME].Options
@@ -22,7 +22,7 @@ func (l *sVolume) Get() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	return util.StrToInt(res), nil
+	return util.Conv.StrToInt(res), nil
 }
 
 func (l *sVolume) Set(volume int) error {

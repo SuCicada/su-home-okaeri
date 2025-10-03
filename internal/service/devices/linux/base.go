@@ -14,11 +14,13 @@ var Device = devices.DeviceBase{
 	Name: "linux",
 	DeviceControl: devices.DeviceControlUnit{
 		Light: &devices.Control{
+			MqttId:  "linux_light",
 			Control: &sLinuxLight{},
 		},
-		// Volume: service.Control{
-		// Control: &sLinuxVolume{},
-		// },
+		Volume: &devices.Control{
+			MqttId:  "linux_volume",
+			Control: &sVolume{},
+		},
 	},
 }
 

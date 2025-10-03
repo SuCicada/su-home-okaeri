@@ -17,8 +17,11 @@ import (
 
 type sLinuxLight struct{}
 
-// func (l *sLinuxLight) sshLinux(cmd string) (string, error) {
-// 	return util.SSHRunRoot(util.GetSSHConfig("linux"), cmd)
+//	func (l *sLinuxLight) sshLinux(cmd string) (string, error) {
+//		return util.SSHRunRoot(util.GetSSHConfig("linux"), cmd)
+//	}
+// func init() {
+// 	mqttcontroller.RegisterRoute(Device.Name, sLinuxLight.Set)
 // }
 
 func (l *sLinuxLight) Get() (int, error) {
@@ -29,7 +32,7 @@ func (l *sLinuxLight) Get() (int, error) {
 		logger.Error("Error getting light:", err)
 		return 0, err
 	}
-	return util.StrToInt(res), nil
+	return util.Conv.StrToInt(res), nil
 }
 
 func (l *sLinuxLight) Set(light int) error {

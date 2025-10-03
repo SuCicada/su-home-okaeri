@@ -2,7 +2,7 @@ package util
 
 import (
 	"SuCicada/home/internal/logger"
-	"os"
+	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -13,7 +13,7 @@ type uConv struct{}
 
 var Conv = uConv{}
 
-func StrToInt(v string) int {
+func (c *uConv) StrToInt(v string) int {
 	i, err := strconv.Atoi(strings.TrimSpace(v))
 	if err != nil {
 		logger.Warn("not number: ", v)
@@ -21,13 +21,18 @@ func StrToInt(v string) int {
 	}
 	return i
 }
-
-func GetInt(key string) int {
-	v := os.Getenv(key)
-	if v == "" {
-		return 0
+func (c *uConv) ToBytes(v interface{}) []byte {
+	var bytes []byte
+	switch v := v.(type) {
+	case []byte:
+		bytes = v
+	case string:
+		bytes = []byte(v)
+	default:
+		bytes, _ = json.Marshal(v)
 	}
-	return StrToInt(v)
+
+	return bytes
 }
 
 func (c *uConv) GetMapFromGinContext(ginC *gin.Context) (map[string]string, error) {

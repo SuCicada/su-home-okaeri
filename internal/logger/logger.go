@@ -8,3 +8,8 @@ var Info = Sugar.Info
 var Debug = Sugar.Debug
 var Warn = Sugar.Warn
 var Error = Sugar.Error
+
+// func Init() {
+// Logger, _ = zap.NewProduction()
+// Sugar = Logger.Sugar()
+// }

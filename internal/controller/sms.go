@@ -2,10 +2,10 @@ package controller
 
 import (
 	"SuCicada/home/internal/cfg"
+	"SuCicada/home/internal/logger"
 	"SuCicada/home/internal/response"
 	"SuCicada/home/internal/util"
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 
@@ -32,7 +32,7 @@ func (c *cSmsCheck) Webhook(ctx *gin.Context) {
 	}
 
 	body := req.Body
-	log.Println("webhook receive:", body)
+	logger.Info("webhook receive:", body)
 
 	os.WriteFile(TEMP_FILE, []byte(body), 0644)
 	response.Success(ctx)
@@ -47,6 +47,7 @@ func (c *cSmsCheck) SendVerifyCode(ctx *gin.Context) {
 		return
 	}
 
+	logger.Info("send verify code", code)
 	res, err := resty.New().R().
 		SetBody(map[string]string{
 			"name": SMS_Name,
@@ -81,7 +82,7 @@ func (c *cSmsCheck) CheckSMS(ctx *gin.Context) {
 
 	text := string(body)
 	if DoCheckSMS(text) == false {
-		log.Println("检查失败：未收到预期的验证消息或验证超时")
+		logger.Warn("检查失败：未收到预期的验证消息或验证超时")
 		util.Alert.SendApprise(apprise.Message{
 			Title: "❌[132短信] inactive",
 			Body:  "流れは問題がある",
@@ -91,6 +92,7 @@ func (c *cSmsCheck) CheckSMS(ctx *gin.Context) {
 
 		response.Success(ctx, "check over, but failed")
 	} else {
+		logger.Info("check success")
 		response.Success(ctx)
 	}
 }
@@ -99,21 +101,21 @@ func DoCheckSMS(text string) bool {
 	re := regexp.MustCompile(`【Spug推送】(.+)欢迎您，您的验证码为(\d{6})`)
 	match := re.FindStringSubmatch(text)
 	if len(match) != 3 {
-		log.Println("match not match", match)
+		logger.Warn("match not match", match)
 		return false
 	}
 
 	name, code := match[1], match[2]
 
 	if name != SMS_Name {
-		log.Println("name not match", name, SMS_Name)
+		logger.Warn("name not match", name, SMS_Name)
 		return false
 	}
 
 	secret := cfg.GetConfig().SMSCheck.Secret
 	res := util.OTP.Verify(secret, code)
 	if !res {
-		log.Println("verify error", code)
+		logger.Warn("verify error", code)
 		return false
 	}
 
