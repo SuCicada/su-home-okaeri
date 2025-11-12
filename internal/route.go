@@ -7,7 +7,7 @@ import (
 )
 
 func GetRoute(r *gin.Engine) {
-	r.POST("/sleep", controller.Control.Sleep)
+	// r.POST("/sleep", controller.Control.Sleep)
 	r.POST("/control/:device", controller.Control.SetValue)
 
 	r.POST("/sms-check/send", controller.SmsCheck.SendVerifyCode)

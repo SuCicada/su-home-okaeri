@@ -20,8 +20,7 @@ func LoadConfig(configPath string) (*appconfig.AppConfig, error) {
 	// configOnce.Do(func() {
 	var config = &appconfig.AppConfig{}
 
-	yamlFile, _err := os.ReadFile(configPath)
-	err = _err
+	yamlFile, err := os.ReadFile(configPath)
 	if err != nil {
 		logger.Error("yaml file error: ", err)
 		return nil, err
