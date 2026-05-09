@@ -1,68 +1,34 @@
 package devices
 
 import (
-	"SuCicada/home/internal/cfg"
-	"SuCicada/home/internal/logger"
-	"SuCicada/home/internal/mqttpkg"
-	"SuCicada/home/internal/structs/appconfig"
-	"encoding/json"
-
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"sucicada/home/internal/logger"
+	"sucicada/home/internal/service/mqttservice"
+	devicesstructs "sucicada/home/internal/structs/devices"
 )
 
-func GetDeviceControlConfig(deviceName string) appconfig.DeviceControl {
-	device := cfg.GetConfig().Devices[deviceName]
-	return device.Control
-}
-func GetDevice(deviceName string) *DeviceBase {
-	device, ok := devices[deviceName]
-	if !ok {
-		logger.Warn("Device not found: ", deviceName)
-		return nil
-	}
-	return &device
-}
+//	func GetDeviceControlConfig(deviceName string) map[string]appconfig.DeviceControl {
+//		device := cfg.GetConfig().Devices[deviceName]
+//		return device.Control
+//	}
+//
+//	func GetDevices() map[string]devicesstructs.DeviceBase {
+//		return DEVICES
+//	}
+//
+//	func GetDevice(deviceName string) *devicesstructs.DeviceBase {
+//		device, ok := DEVICES[deviceName]
+//		if !ok {
+//			logger.Warn("Device not found: ", deviceName)
+//			return nil
+//		}
+//		return &device
+//	}
+var DEVICES = map[string]devicesstructs.DeviceBase{}
 
-var devices = map[string]DeviceBase{}
-
-func RegisterDevice(device *DeviceBase) {
-	devices[device.Name] = *device
+func RegisterDevice(device *devicesstructs.DeviceBase) {
+	DEVICES[device.Name] = *device
 	logger.Info("Registered device: ", device.Name)
 
-	RegisterMqttRoute(device.DeviceControl.Light)
-	RegisterMqttRoute(device.DeviceControl.Volume)
-
-}
-
-func RegisterMqttRoute(control *Control) {
-	if control == nil {
-		return
-	}
-	topics := cfg.GetMqttConfig().Topics[control.MqttId]
-
-	if topics.CommandTopic == "" {
-		return
-	}
-
-	type MqttPayload struct {
-		State      string `json:"state"` // ON or OFF
-		Brightness int    `json:"brightness,omitempty"`
-	}
-
-	mqttpkg.RegisterRoute(topics.CommandTopic, func(client mqtt.Client, message mqtt.Message) {
-		payload := MqttPayload{}
-		logger.Info("Received message: ", string(message.Payload()))
-
-		json.Unmarshal(message.Payload(), &payload)
-
-		control.Control.Set(payload.Brightness)
-
-		// if payload.Brightness == 0 {
-		if payload.State == "OFF" {
-			payload.Brightness = 0
-		}
-		// }
-
-		mqttpkg.Publish(topics.StateTopic, payload)
-	})
+	mqttservice.RegisterMqttRouteLight(device.DeviceControl.Light)
+	mqttservice.RegisterMqttRouteMedia(device.DeviceControl.Media)
 }

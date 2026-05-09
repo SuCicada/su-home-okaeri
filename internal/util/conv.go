@@ -1,12 +1,13 @@
 package util
 
 import (
-	"SuCicada/home/internal/logger"
 	"encoding/json"
 	"strconv"
 	"strings"
+	"sucicada/home/internal/logger"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mitchellh/mapstructure"
 )
 
 type uConv struct{}
@@ -34,7 +35,10 @@ func (c *uConv) ToBytes(v interface{}) []byte {
 
 	return bytes
 }
-
+func (c *uConv) ToJsonStr(v any) string {
+	jsonStr, _ := json.Marshal(v)
+	return string(jsonStr)
+}
 func (c *uConv) GetMapFromGinContext(ginC *gin.Context) (map[string]string, error) {
 
 	var result = make(map[string]string)
@@ -56,4 +60,23 @@ func (c *uConv) GetMapFromGinContext(ginC *gin.Context) (map[string]string, erro
 	}
 
 	return result, nil
+}
+
+func (c *uConv) AnyToMap(v any) map[string]any {
+	var result map[string]any
+	mapstructure.Decode(v, &result)
+	return result
+}
+
+func (c *uConv) MapToAny(mapdata any, target any) error {
+	cfg := &mapstructure.DecoderConfig{
+		Result:           target,
+		TagName:          "json",
+		WeaklyTypedInput: true,
+	}
+	decoder, err := mapstructure.NewDecoder(cfg)
+	if err != nil {
+		return err
+	}
+	return decoder.Decode(mapdata)
 }

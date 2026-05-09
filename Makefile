@@ -3,4 +3,4 @@ deploy:
 	make docker-su-home-okaeri
 
 dev:
-	air
+	aira

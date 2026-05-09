@@ -1,14 +1,15 @@
 package appconfig
 
 type DeviceConfig struct {
-	SSH     SSHConfig     `yaml:"ssh"`
-	Control DeviceControl `yaml:"control"`
+	SSH     SSHConfig                `yaml:"ssh"`
+	Control map[string]DeviceControl `yaml:"control"`
 	// Value struct {
 	// Light  int `yaml:"light"`
 	// Volume int `yaml:"volume"`
 	// } `yaml:"value"`
 }
-type DeviceControl map[string]Value
+type DeviceControl map[string]any
+
 type Value struct {
 	Options map[string]any `yaml:"options"`
 	High    int            `yaml:"high"`

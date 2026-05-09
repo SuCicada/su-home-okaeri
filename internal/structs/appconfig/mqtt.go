@@ -8,10 +8,12 @@ type MqttConfig struct {
 		Password string `yaml:"password"`
 	} `yaml:"config"`
 
-	Topics map[string]MqttTopic `yaml:"topics"`
+	Topics map[string]MqttTopics `yaml:"topics"`
 }
 
-type MqttTopic struct {
-	CommandTopic string `yaml:"command_topic"`
-	StateTopic   string `yaml:"state_topic"`
-}
+type MqttTopics map[string]string
+
+// type MqttTopic struct {
+// CommandTopic string `yaml:"command_topic"`
+// StateTopic   string `yaml:"state_topic"`
+// }

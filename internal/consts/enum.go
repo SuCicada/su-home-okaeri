@@ -1,6 +1,6 @@
 package consts
 
 const (
-	CONTROL_VOLUME = "volume"
-	CONTROL_LIGHT  = "light"
+	CONTROL_MEDIA = "media"
+	CONTROL_LIGHT = "light"
 )

@@ -1,8 +1,6 @@
-package devices
+package devicesstructs
 
 import (
-	"SuCicada/home/internal/cfg"
-	"SuCicada/home/internal/structs/appconfig"
 	"reflect"
 	"strings"
 )
@@ -13,8 +11,8 @@ type DeviceBase struct {
 }
 
 type DeviceControlUnit struct {
-	Light  *Control `yaml:"light"`
-	Volume *Control `yaml:"volume"`
+	Light *Control `yaml:"light"`
+	Media *Control `yaml:"media"`
 }
 
 // func (d *DeviceControlUnit) GetControl(name string) *Control {
@@ -53,34 +51,34 @@ type Control struct {
 	Control ControllerInterface
 }
 
-func (d *Control) Toggle() error {
-	value := d.GetValue()
-	v, err := d.Control.Get()
-	if err != nil {
-		return err
-	}
-	var newValue int
-	if v >= value.High {
-		newValue = value.Low
-	} else {
-		newValue = value.High
-	}
-	return d.Control.Set(newValue)
-}
-func (d *Control) GetValue() appconfig.Value {
-	device := cfg.GetConfig().Devices[d.Device.Name]
-	control := device.Control[d.Name]
-	return control
-}
+// func (d *Control) Toggle() error {
+// 	value := d.GetValue()
+// 	v, err := d.Control.Get()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	var newValue int
+// 	if v >= value.High {
+// 		newValue = value.Low
+// 	} else {
+// 		newValue = value.High
+// 	}
+// 	return d.Control.Set(newValue)
+// }
+// func (d *Control) GetValue() appconfig.Value {
+// 	device := cfg.GetConfig().Devices[d.Device.Name]
+// 	control := device.Control[d.Name]
+// 	return control.(appconfig.Value)
+// }
 
-func (d *Control) HIGH() int {
-	return d.GetValue().High
-}
-func (d *Control) LOW() int {
-	return d.GetValue().Low
-}
+// func (d *Control) HIGH() int {
+// 	return d.GetValue().High
+// }
+// func (d *Control) LOW() int {
+// 	return d.GetValue().Low
+// }
 
 type ControllerInterface interface {
-	Get() (int, error)
-	Set(value int) error
+	Get() (any, error)
+	Set(command string) error
 }

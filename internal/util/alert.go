@@ -1,10 +1,10 @@
 package util
 
 import (
-	"SuCicada/home/internal/cfg"
-	"SuCicada/home/internal/logger"
 	"context"
 	"fmt"
+	"sucicada/home/internal/cfg"
+	"sucicada/home/internal/logger"
 
 	"github.com/SuCicada/apprise-sdk-go/apprise"
 )

@@ -1,13 +1,14 @@
 package controller
 
 import (
-	"SuCicada/home/internal/cfg"
-	"SuCicada/home/internal/logger"
-	"SuCicada/home/internal/response"
-	"SuCicada/home/internal/util"
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
+	"sucicada/home/internal/cfg"
+	"sucicada/home/internal/logger"
+	"sucicada/home/internal/response"
+	"sucicada/home/internal/util"
 
 	"github.com/SuCicada/apprise-sdk-go/apprise"
 	"github.com/gin-gonic/gin"
@@ -38,7 +39,7 @@ func (c *cSmsCheck) Webhook(ctx *gin.Context) {
 	response.Success(ctx)
 }
 
-const SMS_Name = "短信测试"
+const SMS_Name = "短信测试132"
 
 func (c *cSmsCheck) SendVerifyCode(ctx *gin.Context) {
 	code, err := util.OTP.Generate(cfg.GetConfig().SMSCheck.Secret)
@@ -98,7 +99,10 @@ func (c *cSmsCheck) CheckSMS(ctx *gin.Context) {
 }
 
 func DoCheckSMS(text string) bool {
-	re := regexp.MustCompile(`【Spug推送】(.+)欢迎您，您的验证码为(\d{6})`)
+	if !strings.Contains(text, SMS_Name) {
+		return false
+	}
+	re := regexp.MustCompile(`(.+)欢迎您，您的验证码为(\d{6})`)
 	match := re.FindStringSubmatch(text)
 	if len(match) != 3 {
 		logger.Warn("match not match", match)

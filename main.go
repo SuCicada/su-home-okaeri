@@ -1,12 +1,13 @@
 package main
 
 import (
-	"SuCicada/home/internal"
-	"SuCicada/home/internal/cfg"
-	"SuCicada/home/internal/mqttpkg"
 	"fmt"
 	"os"
 	"os/signal"
+	"sucicada/home/internal"
+	"sucicada/home/internal/cfg"
+	"sucicada/home/internal/devices"
+	"sucicada/home/internal/mqttpkg"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
@@ -14,11 +15,13 @@ import (
 )
 
 func Init() {
+	devices.Init()
 	mqttpkg.Init()
 }
 func Close() {
 	mqttpkg.Close()
 }
+
 func main() {
 	// 加载环境变量
 	godotenv.Load()

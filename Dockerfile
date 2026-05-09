@@ -1,5 +1,5 @@
 # ---- Build Stage ----
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26.2-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # 构建应用
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -v -o su-home-okaeri .
 
 # ---- Production Stage ----
 FROM kroniak/ssh-client
@@ -25,10 +25,10 @@ FROM kroniak/ssh-client
 WORKDIR /app/
 
 # 从构建阶段复制二进制文件
-COPY --from=builder /app/main .
+COPY --from=builder /app/su-home-okaeri .
 
 # 暴露端口
 EXPOSE 41406
 
 # 运行应用
-CMD ["./main"]
+CMD ["./su-home-okaeri"]

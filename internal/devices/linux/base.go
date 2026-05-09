@@ -1,26 +1,27 @@
 package linux
 
 import (
-	"SuCicada/home/internal/cfg"
-	"SuCicada/home/internal/service/devices"
-	"SuCicada/home/internal/util"
+	"sucicada/home/internal/cfg"
+	"sucicada/home/internal/service/devices"
+	devicesstructs "sucicada/home/internal/structs/devices"
+	"sucicada/home/internal/util"
 )
 
 func init() {
 	devices.RegisterDevice(&Device)
 }
 
-var Device = devices.DeviceBase{
+var Device = devicesstructs.DeviceBase{
 	Name: "linux",
-	DeviceControl: devices.DeviceControlUnit{
-		Light: &devices.Control{
+	DeviceControl: devicesstructs.DeviceControlUnit{
+		Light: &devicesstructs.Control{
 			MqttId:  "linux_light",
 			Control: &sLinuxLight{},
 		},
-		Volume: &devices.Control{
-			MqttId:  "linux_volume",
-			Control: &sVolume{},
-		},
+		// Media: &devices.Control{
+		// 	MqttId:  "linux_media",
+		// 	Control: &sLinuxMedia{},
+		// },
 	},
 }
 

@@ -1,10 +1,10 @@
 package test
 
 import (
-	"SuCicada/home/internal/controller"
+	"sucicada/home/internal/controller"
 	"testing"
 
-	"SuCicada/home/internal/cfg"
+	"sucicada/home/internal/cfg"
 
 	"github.com/stretchr/testify/suite"
 )

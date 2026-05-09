@@ -1,9 +1,9 @@
 package cfg
 
 import (
-	"SuCicada/home/internal/logger"
-	"SuCicada/home/internal/structs/appconfig"
 	"os"
+	"sucicada/home/internal/logger"
+	"sucicada/home/internal/structs/appconfig"
 
 	"github.com/gookit/goutil"
 	"gopkg.in/yaml.v3"

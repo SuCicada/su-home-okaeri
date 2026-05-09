@@ -1,19 +1,20 @@
 package redmi
 
 import (
-	"SuCicada/home/internal/cfg"
-	"SuCicada/home/internal/service/devices"
-	"SuCicada/home/internal/util"
+	"sucicada/home/internal/cfg"
+	"sucicada/home/internal/service/devices"
+	devicesstructs "sucicada/home/internal/structs/devices"
+	"sucicada/home/internal/util"
 )
 
 func init() {
 	devices.RegisterDevice(&Device)
 }
 
-var Device = devices.DeviceBase{
+var Device = devicesstructs.DeviceBase{
 	Name: "redmi",
-	DeviceControl: devices.DeviceControlUnit{
-		Light: &devices.Control{
+	DeviceControl: devicesstructs.DeviceControlUnit{
+		Light: &devicesstructs.Control{
 			Control: &sRedmiLight{},
 		},
 		// Volume: service.Control{

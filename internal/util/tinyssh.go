@@ -1,12 +1,12 @@
 package util
 
 import (
-	"SuCicada/home/internal/logger"
-	"SuCicada/home/internal/structs/appconfig"
 	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
+	"sucicada/home/internal/logger"
+	"sucicada/home/internal/structs/appconfig"
 )
 
 func SSHRunRoot(config appconfig.SSHConfig, cmd string) (string, error) {
