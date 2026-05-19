@@ -48,18 +48,18 @@ func (l *sWindowsMedia) Set(command string) error {
 		logger.Error("Failed to unmarshal command: ", err)
 		return err
 	}
-
+	var res string
 	switch commandRequest.Command {
 	case "play":
-		_, err = sendRequest("/api/media/play")
+		res, err = sendRequest("/api/media/play")
 	case "pause":
-		_, err = sendRequest("/api/media/pause")
+		res, err = sendRequest("/api/media/pause")
 	case "next":
-		_, err = sendRequest("/api/media/next")
+		res, err = sendRequest("/api/media/next")
 	case "previous":
-		_, err = sendRequest("/api/media/previous")
+		res, err = sendRequest("/api/media/previous")
 	case "mute":
-		_, err = sendRequest("/api/volume/mute")
+		res, err = sendRequest("/api/volume/mute")
 	case "volume_set":
 		volume := commandRequest.Args["volume"]
 		if volumeStr, ok := volume.(string); ok {
@@ -67,20 +67,23 @@ func (l *sWindowsMedia) Set(command string) error {
 				level := int(volume * 100)
 				body := map[string]any{"level": level}
 				logger.Info("windows media volume set: ", body)
-				_, err = sendRequestWithBody("/api/volume/set", body)
+				res, err = sendRequestWithBody("/api/volume/set", body)
 			}
 		} else {
 			err = fmt.Errorf("volume is not number: %v", volume)
 		}
 	case "volume_up":
-		_, err = sendRequest("/api/volume/up")
+		res, err = sendRequest("/api/volume/up")
 	case "volume_down":
-		_, err = sendRequest("/api/volume/down")
+		res, err = sendRequest("/api/volume/down")
 	default:
 		logger.Warn("Unknown media command: ", commandRequest.Command)
 		return errors.New("unknown media command")
 	}
 
+	if res != "" {
+		logger.Info("windows media command response: ", res)
+	}
 	if err != nil {
 		logger.Error("Failed to execute media command: ", err)
 	}
