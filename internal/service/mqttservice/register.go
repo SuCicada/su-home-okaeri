@@ -10,6 +10,7 @@ import (
 	commandstructs "sucicada/home/internal/structs/command"
 	devicesstructs "sucicada/home/internal/structs/devices"
 	"sucicada/home/internal/util"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -71,15 +72,7 @@ func RegisterMqttRouteMedia(control *devicesstructs.Control) {
 		return
 	}
 
-	mqttpkg.RegisterRoute(commandTopic, func(client mqtt.Client, message mqtt.Message) {
-		logger.Info("Received media command: ", string(message.Payload()))
-
-		err := control.Control.Set(string(message.Payload()))
-		if err != nil {
-			logger.Error("Failed to execute media command: ", err)
-			return
-		}
-
+	var syncStatus = func() {
 		// internal/devices/windows/media.go
 		getRes, err := control.Control.Get()
 		if err != nil {
@@ -95,6 +88,7 @@ func RegisterMqttRouteMedia(control *devicesstructs.Control) {
 		}
 
 		if statusTopic != "" {
+			status.Thumbnail = nil
 			mqttpkg.Publish(statusTopic, status)
 		}
 		if isMutedTopic != "" {
@@ -103,5 +97,30 @@ func RegisterMqttRouteMedia(control *devicesstructs.Control) {
 		if volumeTopic != "" {
 			mqttpkg.Publish(volumeTopic, status.Volume)
 		}
+	}
+
+	syncStatus()
+	mqttpkg.RegisterRoute(commandTopic, func(client mqtt.Client, message mqtt.Message) {
+		logger.Info("Received media command: ", string(message.Payload()))
+
+		err := control.Control.Set(string(message.Payload()))
+		if err != nil {
+			logger.Error("Failed to execute media command: ", err)
+			return
+		}
+
+		// 操作后不要只同步一次，做几次延迟校准
+		syncStatus()
+		time.Sleep(100 * time.Millisecond)
+		syncStatus()
+		time.Sleep(500 * time.Millisecond)
+		syncStatus()
 	})
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		for range ticker.C {
+			syncStatus()
+		}
+	}()
 }

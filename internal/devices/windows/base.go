@@ -1,13 +1,12 @@
 package windows
 
 import (
-	"sucicada/home/internal/service/devices"
 	devicesstructs "sucicada/home/internal/structs/devices"
 )
 
-func init() {
-	devices.RegisterDevice(&Device)
-}
+// func init() {
+// 	devices.RegisterDevice(&Device)
+// }
 
 var Device = devicesstructs.DeviceBase{
 	Name: "windows",

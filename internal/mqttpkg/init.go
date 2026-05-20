@@ -2,6 +2,7 @@ package mqttpkg
 
 import (
 	"fmt"
+	"log"
 	"sucicada/home/internal/cfg"
 	"sucicada/home/internal/logger"
 	"sucicada/home/internal/util"
@@ -74,13 +75,13 @@ func RegisterRoute(topic string, callback mqtt.MessageHandler) {
 	routesLock.Unlock()
 
 	// 如果已经连接，立即订阅
-	// if mqttClient != nil && mqttClient.IsConnected() {
-	// 	if token := mqttClient.Subscribe(topic, 1, callback); token.Wait() && token.Error() != nil {
-	// 		log.Printf("❌ 订阅 %s 失败: %v", topic, token.Error())
-	// 	} else {
-	// 		log.Printf("📡 已订阅: %s", topic)
-	// 	}
-	// }
+	if mqttClient != nil && mqttClient.IsConnected() {
+		if token := mqttClient.Subscribe(route.Topic, route.Qos, route.Callback); token.Wait() && token.Error() != nil {
+			log.Printf("❌ 订阅 %s 失败: %v", topic, token.Error())
+		} else {
+			log.Printf("📡 已订阅: %s", topic)
+		}
+	}
 }
 
 type MqttRoute struct {
