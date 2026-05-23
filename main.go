@@ -7,7 +7,9 @@ import (
 	"sucicada/home/internal"
 	"sucicada/home/internal/cfg"
 	"sucicada/home/internal/devices"
+	mqttentry "sucicada/home/internal/entry/mqtt"
 	"sucicada/home/internal/mqttpkg"
+	"sucicada/home/internal/service/mqttservice"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +19,13 @@ import (
 func Init() {
 	devices.Init()
 	mqttpkg.Init()
+	mqttservice.RegisterRoutes()
+	mqttentry.RegisterMediaRoutes()
+}
+func InitHttp() {
+	r := gin.Default()
+	internal.GetRoute(r)
+	r.Run(":41406")
 }
 func Close() {
 	mqttpkg.Close()
@@ -29,13 +38,17 @@ func main() {
 	cfg.LoadConfig("config.yaml")
 
 	Init()
+	InitExitSignal()
+	InitHttp()
+}
 
+func InitExitSignal() {
 	// システム信号を受信する
-	sigChan := make(chan os.Signal, 1)
-	defer close(sigChan)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
 	go func() {
+		sigChan := make(chan os.Signal, 1)
+		defer close(sigChan)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
 		sig := <-sigChan
 		fmt.Printf("get signal: %v\n", sig)
 
@@ -43,8 +56,4 @@ func main() {
 
 		os.Exit(0)
 	}()
-
-	r := gin.Default()
-	internal.GetRoute(r)
-	r.Run(":41406")
 }

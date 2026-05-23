@@ -2,18 +2,22 @@ package mqttservice
 
 import (
 	"encoding/json"
-	"fmt"
 	"sucicada/home/internal/cfg"
 	"sucicada/home/internal/logger"
 	"sucicada/home/internal/mqttpkg"
-	"sucicada/home/internal/structs"
+	deviceservice "sucicada/home/internal/service/devices"
 	commandstructs "sucicada/home/internal/structs/command"
 	devicesstructs "sucicada/home/internal/structs/devices"
 	"sucicada/home/internal/util"
-	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
+
+func RegisterRoutes() {
+	for _, device := range deviceservice.GetDevices() {
+		RegisterMqttRouteLight(device.DeviceControl.Light)
+	}
+}
 
 func RegisterMqttRouteLight(control *devicesstructs.Control) {
 	if control == nil {
@@ -54,73 +58,4 @@ func RegisterMqttRouteLight(control *devicesstructs.Control) {
 
 		mqttpkg.Publish(stateTopic, payload)
 	})
-}
-
-func RegisterMqttRouteMedia(control *devicesstructs.Control) {
-	if control == nil {
-		return
-	}
-	topics := cfg.GetMqttConfig().Topics[control.MqttId]
-
-	commandTopic := topics["command_topic"]
-
-	statusTopic := topics["status_topic"]
-	isMutedTopic := topics["is_muted_topic"]
-	volumeTopic := topics["volume_topic"]
-
-	if commandTopic == "" {
-		return
-	}
-
-	var syncStatus = func() {
-		// internal/devices/windows/media.go
-		getRes, err := control.Control.Get()
-		if err != nil {
-			logger.Error("Failed to get media status: ", err)
-			return
-		}
-		var status structs.MediaStatus
-		if getRes, ok := getRes.(structs.MediaStatus); ok {
-			status = getRes
-		} else {
-			logger.Error("Failed to get media status: ", fmt.Sprintf("%v", getRes))
-			return
-		}
-
-		if statusTopic != "" {
-			status.Thumbnail = nil
-			mqttpkg.Publish(statusTopic, status)
-		}
-		if isMutedTopic != "" {
-			mqttpkg.Publish(isMutedTopic, status.IsMute)
-		}
-		if volumeTopic != "" {
-			mqttpkg.Publish(volumeTopic, status.Volume)
-		}
-	}
-
-	syncStatus()
-	mqttpkg.RegisterRoute(commandTopic, func(client mqtt.Client, message mqtt.Message) {
-		logger.Info("Received media command: ", string(message.Payload()))
-
-		err := control.Control.Set(string(message.Payload()))
-		if err != nil {
-			logger.Error("Failed to execute media command: ", err)
-			return
-		}
-
-		// 操作后不要只同步一次，做几次延迟校准
-		syncStatus()
-		time.Sleep(100 * time.Millisecond)
-		syncStatus()
-		time.Sleep(500 * time.Millisecond)
-		syncStatus()
-	})
-
-	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		for range ticker.C {
-			syncStatus()
-		}
-	}()
 }

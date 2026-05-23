@@ -3,6 +3,7 @@ package devicesstructs
 import (
 	"reflect"
 	"strings"
+	"sucicada/home/internal/structs"
 )
 
 type DeviceBase struct {
@@ -81,4 +82,9 @@ type Control struct {
 type ControllerInterface interface {
 	Get() (any, error)
 	Set(command string) error
+}
+
+type MediaController interface {
+	GetStatus() (structs.MediaStatus, error)
+	Execute(command structs.MediaCommand) error
 }

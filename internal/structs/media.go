@@ -11,3 +11,8 @@ type MediaStatus struct {
 	Volume      int     `json:"volume"`
 	IsMute      bool    `json:"isMute"`
 }
+
+type MediaCommand struct {
+	Command string         `json:"command"`
+	Args    map[string]any `json:"args"`
+}

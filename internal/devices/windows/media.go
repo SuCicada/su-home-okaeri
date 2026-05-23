@@ -24,12 +24,16 @@ type sWindowsMedia struct{}
 var WindowsMedia = &sWindowsMedia{}
 
 func (l *sWindowsMedia) Get() (any, error) {
+	return l.GetStatus()
+}
+
+func (l *sWindowsMedia) GetStatus() (structs.MediaStatus, error) {
 	type StatusRes struct {
 		Data structs.MediaStatus `json:"data"`
 	}
 	res, err := sendGetRequest("/api/media/status")
 	if err != nil {
-		return "", err
+		return structs.MediaStatus{}, err
 	}
 	var statusRes StatusRes
 	err = json.Unmarshal([]byte(res), &statusRes)
@@ -37,22 +41,22 @@ func (l *sWindowsMedia) Get() (any, error) {
 }
 
 func (l *sWindowsMedia) Set(command string) error {
-	type CommandRequest struct {
-		Command string         `json:"command"`
-		Args    map[string]any `json:"args"`
-	}
-
-	var commandRequest CommandRequest
+	var commandRequest structs.MediaCommand
 	err := json.Unmarshal([]byte(command), &commandRequest)
 	if err != nil {
 		logger.Error("Failed to unmarshal command: ", err)
 		return err
 	}
+	return l.Execute(commandRequest)
+}
+
+func (l *sWindowsMedia) Execute(commandRequest structs.MediaCommand) error {
 	var res string
+	var err error
 	switch commandRequest.Command {
 	case "play":
 		res, err = sendRequest("/api/media/play")
-	case "pause":
+	case "pause", "stop":
 		res, err = sendRequest("/api/media/pause")
 	case "next":
 		res, err = sendRequest("/api/media/next")
@@ -61,17 +65,17 @@ func (l *sWindowsMedia) Set(command string) error {
 	case "mute":
 		res, err = sendRequest("/api/volume/mute")
 	case "volume_set":
-		volume := commandRequest.Args["volume"]
-		if volumeStr, ok := volume.(string); ok {
-			if volume, err := strconv.ParseFloat(volumeStr, 64); err == nil {
-				level := int(volume * 100)
-				body := map[string]any{"level": level}
-				logger.Info("windows media volume set: ", body)
-				res, err = sendRequestWithBody("/api/volume/set", body)
-			}
-		} else {
-			err = fmt.Errorf("volume is not number: %v", volume)
+		var volume, err = parseVolume(commandRequest.Args["volume"])
+		if err != nil {
+			return err
 		}
+		if volume < 0 || volume > 1 {
+			return errors.New("volume must be between 0 and 1")
+		}
+		level := int(volume * 100)
+		body := map[string]any{"level": level}
+		logger.Info("windows media volume set: ", body)
+		res, err = sendRequestWithBody("/api/volume/set", body)
 	case "volume_up":
 		res, err = sendRequest("/api/volume/up")
 	case "volume_down":
@@ -88,6 +92,19 @@ func (l *sWindowsMedia) Set(command string) error {
 		logger.Error("Failed to execute media command: ", err)
 	}
 	return err
+}
+
+func parseVolume(volume any) (float64, error) {
+	switch value := volume.(type) {
+	case string:
+		return strconv.ParseFloat(value, 64)
+	case float64:
+		return value, nil
+	case int:
+		return float64(value), nil
+	default:
+		return 0, fmt.Errorf("volume is not number: %v", volume)
+	}
 }
 
 type ControllerResponse struct {

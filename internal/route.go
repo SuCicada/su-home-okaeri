@@ -2,8 +2,11 @@ package internal
 
 import (
 	"sucicada/home/internal/controller"
+	httpentry "sucicada/home/internal/entry/http"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func GetRoute(r *gin.Engine) {
@@ -14,4 +17,7 @@ func GetRoute(r *gin.Engine) {
 	r.POST("/sms-check/webhook", controller.SmsCheck.Webhook)
 	r.POST("/sms-check/check", controller.SmsCheck.CheckSMS)
 
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	httpentry.RegisterMediaRoutes(r)
 }
