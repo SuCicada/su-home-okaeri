@@ -16,6 +16,7 @@ import (
 	"sucicada/home/internal/structs"
 	"sucicada/home/internal/util"
 
+	"github.com/iancoleman/strcase"
 	"resty.dev/v3"
 )
 
@@ -36,7 +37,9 @@ func (l *sWindowsMedia) GetStatus() (structs.MediaStatus, error) {
 		return structs.MediaStatus{}, err
 	}
 	var statusRes StatusRes
-	err = json.Unmarshal([]byte(res), &statusRes)
+	// 因为windows过来的格式是PascalCase
+	snakeCaseJson := strcase.ToSnake(res)
+	err = json.Unmarshal([]byte(snakeCaseJson), &statusRes)
 	return statusRes.Data, err
 }
 

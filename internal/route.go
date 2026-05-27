@@ -19,5 +19,6 @@ func GetRoute(r *gin.Engine) {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	httpentry.RegisterAudioRoutes(r)
 	httpentry.RegisterMediaRoutes(r)
 }

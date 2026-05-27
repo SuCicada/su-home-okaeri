@@ -1,6 +1,7 @@
 package linux
 
 import (
+	"strings"
 	"sucicada/home/internal/cfg"
 	"sucicada/home/internal/service/devices"
 	devicesstructs "sucicada/home/internal/structs/devices"
@@ -15,20 +16,25 @@ var Device = devicesstructs.DeviceBase{
 	Name: "linux",
 	DeviceControl: devicesstructs.DeviceControlUnit{
 		Light: &devicesstructs.Control{
-			MqttId:  "linux_light",
+			MqttId:  "light_linux",
 			Control: &sLinuxLight{},
 		},
-		// Media: &devices.Control{
-		// 	MqttId:  "linux_media",
-		// 	Control: &sLinuxMedia{},
-		// },
+		Audio: &devicesstructs.Control{
+			Control: &sLinuxAudio{},
+		},
+		Media: &devicesstructs.Control{
+			MqttId:  "media_linux",
+			Control: &sLinuxMedia{},
+		},
 	},
 }
 
 var Config = cfg.GetDeviceConfig(Device.Name)
 
 func sshLinux(cmd string) (string, error) {
-	return util.SSHRunRoot(cfg.GetSSHConfig(Device.Name), cmd)
+	var res, err = util.SSH.SSHRun(cfg.GetSSHConfig(Device.Name), cmd)
+	res = strings.TrimSpace(res)
+	return res, err
 }
 
 // func (l *sLinuxLight) Get() (int, error) {

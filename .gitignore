@@ -39,3 +39,5 @@ go.sum
 /tmp/
 config.yaml
 /home/
+.gocache
+.cache

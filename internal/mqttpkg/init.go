@@ -84,6 +84,24 @@ func RegisterRoute(topic string, callback mqtt.MessageHandler) {
 	}
 }
 
+type Router struct {
+	routes []MqttRoute
+}
+
+func NewRouter() *Router {
+	return &Router{}
+}
+
+func (r *Router) Subscribe(topic string, callback mqtt.MessageHandler) {
+	r.routes = append(r.routes, MqttRoute{Topic: topic, Qos: 1, Callback: callback})
+}
+
+func UseRoutes(router *Router) {
+	for _, route := range router.routes {
+		RegisterRoute(route.Topic, route.Callback)
+	}
+}
+
 type MqttRoute struct {
 	Topic    string
 	Qos      byte

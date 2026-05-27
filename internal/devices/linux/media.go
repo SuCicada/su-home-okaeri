@@ -4,66 +4,146 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"sucicada/home/internal/consts"
 	"sucicada/home/internal/logger"
+	"sucicada/home/internal/structs"
 	"sucicada/home/internal/util"
+
+	"github.com/samber/lo"
 )
 
 type sLinuxMedia struct{}
 
-func getPactlOpts() int {
-	options := Config.Control[consts.CONTROL_MEDIA]["options"].(map[string]any)
-	pactlOpts := options["pactl"]
-	return pactlOpts.(int)
+func (l *sLinuxMedia) Get() (any, error) {
+	return l.GetStatus()
 }
 
-func (l *sLinuxMedia) Get() (int, error) {
-	pactlOpts := getPactlOpts()
-	res, err := sshLinux(fmt.Sprintf("pactl get-sink-volume %d", pactlOpts))
-	if err != nil {
-		return 0, err
-	}
-	return util.Conv.StrToInt(res), nil
-}
-
-func (m *sLinuxMedia) Set(command string) error {
-	type CommandRequest struct {
-		Command string         `json:"command"`
-		Args    map[string]any `json:"args"`
-	}
-
-	var commandRequest CommandRequest
-	err := json.Unmarshal([]byte(command), &commandRequest)
-	if err != nil {
-		logger.Error("Failed to unmarshal command: ", err)
+func (l *sLinuxMedia) Set(command string) error {
+	var data structs.MediaCommand
+	if err := json.Unmarshal([]byte(command), &data); err != nil {
+		logger.Error("Failed to unmarshal media command: ", err)
 		return err
 	}
+	return l.Execute(data)
+}
 
-	pactlOpts := getPactlOpts()
+//	return {
+//	 "volume": 50,
+//	 "is_mute": false
+//	}
+func (l *sLinuxMedia) GetStatus() (structs.MediaStatus, error) {
+	currentSink, err := sshLinux(`pactl get-default-sink`)
+	if err != nil {
+		return structs.MediaStatus{}, err
+	}
+	//res, err := sshLinux(strings.ReplaceAll(fmt.Sprintf(`
+	//pactl --format=json list sinks
+	//| jq ".[] | select(.name == \"$%s\") | {volume, mute}"`, currentSink),
+	//		"\n", ""))
+	res, err := sshLinux(fmt.Sprintf(`pactl --format=json list sinks`))
+	if err != nil {
+		return structs.MediaStatus{}, err
+	}
+	type Sink struct {
+		Name   string `json:"name"`
+		Mute   bool   `json:"mute"`
+		Volume map[string]struct {
+			ValuePercent string `json:"value_percent"`
+		} `json:"volume"`
+	}
+	sinks := []Sink{}
+	err = json.Unmarshal([]byte(res), &sinks)
+	if err != nil {
+		return structs.MediaStatus{}, err
+	}
+	sink, ok := lo.Find(sinks, func(s Sink) bool {
+		return s.Name == currentSink
+	})
+	if !ok {
+		return structs.MediaStatus{}, errors.New("sink not found")
+	}
+	// 80%
+	volumeStr := sink.Volume["front-left"].ValuePercent
+	volume, err := strconv.Atoi(strings.TrimSuffix(volumeStr, "%"))
+	if err != nil {
+		return structs.MediaStatus{}, err
+	}
+	return structs.MediaStatus{
+		Volume: volume,
+		IsMute: sink.Mute,
+	}, nil
+}
 
-	switch commandRequest.Command {
-	case "volume_set":
-		if volume, ok := commandRequest.Args["volume"]; ok {
-			_, err = sshLinux(fmt.Sprintf("pactl set-sink-volume %d %v%%", pactlOpts, volume))
-		}
-	case "volume_up":
-		step := 5
-		if s, ok := commandRequest.Args["step"]; ok {
-			step = int(s.(float64))
-		}
-		_, err = sshLinux(fmt.Sprintf("pactl set-sink-volume %d +%d%%", pactlOpts, step))
-	case "volume_down":
-		step := 5
-		if s, ok := commandRequest.Args["step"]; ok {
-			step = int(s.(float64))
-		}
-		_, err = sshLinux(fmt.Sprintf("pactl set-sink-volume %d -%d%%", pactlOpts, step))
+func (l *sLinuxMedia) Execute(command structs.MediaCommand) error {
+	switch command.Command {
+	// case "play":
+	// 	_, err := sshLinux("playerctl play")
+	// 	return err
+	// case "pause":
+	// 	_, err := sshLinux("playerctl pause")
+	// 	return err
+	case "stop":
+		_, err := sshLinux("pkill ffplay")
+		return err
+
 	case "mute":
-		_, err = sshLinux(fmt.Sprintf("pactl set-sink-mute %d toggle", pactlOpts))
+		if command.Args["mute"] == "true" {
+			_, err := sshLinux(fmt.Sprintf("pactl set-sink-mute %s true", getPactlSink()))
+			return err
+		} else {
+			_, err := sshLinux(fmt.Sprintf("pactl set-sink-mute %s false", getPactlSink()))
+			return err
+		}
+
+	case "volume_set":
+		volume, err := parseLinuxVolume(command.Args["volume"])
+		if err != nil {
+			return err
+		}
+		_, err = sshLinux(fmt.Sprintf(
+			"pactl set-sink-volume %s %d%%",
+			getPactlSink(),
+			volume,
+		))
+		return err
 	default:
-		logger.Warn("Unknown media command: ", commandRequest.Command)
-		return errors.New("unknown media command")
+		return errors.New("unsupported linux media command: " + command.Command)
+	}
+}
+
+func getPactlSink() string {
+	options := Config.Control[consts.CONTROL_MEDIA]["options"]
+	optionsMap := util.Conv.AnyToMap(options)
+	if sink, ok := optionsMap["pactl"]; ok {
+		return fmt.Sprint(sink)
+	}
+	return "@DEFAULT_SINK@"
+}
+
+func parseLinuxVolume(volume any) (int, error) {
+	var value float64
+	switch v := volume.(type) {
+	case string:
+		parsed, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return 0, err
+		}
+		value = parsed
+	case float64:
+		value = v
+	case int:
+		value = float64(v)
+	default:
+		return 0, fmt.Errorf("volume is not number: %v", volume)
 	}
 
-	return err
+	if value < 0 {
+		return 0, errors.New("volume must be greater than or equal to 0")
+	}
+	if value <= 1 {
+		value = value * 100
+	}
+	return int(value), nil
 }

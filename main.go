@@ -9,7 +9,6 @@ import (
 	"sucicada/home/internal/devices"
 	mqttentry "sucicada/home/internal/entry/mqtt"
 	"sucicada/home/internal/mqttpkg"
-	"sucicada/home/internal/service/mqttservice"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
@@ -19,8 +18,10 @@ import (
 func Init() {
 	devices.Init()
 	mqttpkg.Init()
-	mqttservice.RegisterRoutes()
-	mqttentry.RegisterMediaRoutes()
+
+	mqttRouter := mqttpkg.NewRouter()
+	mqttentry.RegisterRoutes(mqttRouter)
+	mqttpkg.UseRoutes(mqttRouter)
 }
 func InitHttp() {
 	r := gin.Default()

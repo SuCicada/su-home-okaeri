@@ -24,5 +24,5 @@ var Device = devicesstructs.DeviceBase{
 }
 
 func ssh(cmd string) (string, error) {
-	return util.SSHRunRoot(cfg.GetSSHConfig(Device.Name), cmd)
+	return util.SSH.SSHRunRoot(cfg.GetSSHConfig(Device.Name), cmd)
 }

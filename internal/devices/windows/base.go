@@ -12,7 +12,7 @@ var Device = devicesstructs.DeviceBase{
 	Name: "windows",
 	DeviceControl: devicesstructs.DeviceControlUnit{
 		Media: &devicesstructs.Control{
-			MqttId:  "windows_media",
+			MqttId:  "media_windows",
 			Control: WindowsMedia,
 		},
 	},

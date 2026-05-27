@@ -5,7 +5,6 @@ import (
 	"sucicada/home/internal/cfg"
 	"sucicada/home/internal/logger"
 	"sucicada/home/internal/mqttpkg"
-	deviceservice "sucicada/home/internal/service/devices"
 	commandstructs "sucicada/home/internal/structs/command"
 	devicesstructs "sucicada/home/internal/structs/devices"
 	"sucicada/home/internal/util"
@@ -13,14 +12,11 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-func RegisterRoutes() {
-	for _, device := range deviceservice.GetDevices() {
-		RegisterMqttRouteLight(device.DeviceControl.Light)
-	}
-}
-
-func RegisterMqttRouteLight(control *devicesstructs.Control) {
+func RegisterMqttRouteLight(r *mqttpkg.Router, control *devicesstructs.Control) {
 	if control == nil {
+		return
+	}
+	if _, ok := control.Control.(devicesstructs.LightController); ok {
 		return
 	}
 
@@ -43,7 +39,7 @@ func RegisterMqttRouteLight(control *devicesstructs.Control) {
 		Brightness int    `json:"brightness,omitempty"`
 	}
 
-	mqttpkg.RegisterRoute(commandTopic, func(client mqtt.Client, message mqtt.Message) {
+	r.Subscribe(commandTopic, func(client mqtt.Client, message mqtt.Message) {
 		payload := MqttPayload{}
 		logger.Info("Received message: ", string(message.Payload()))
 

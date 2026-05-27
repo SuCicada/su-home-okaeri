@@ -1,8 +1,8 @@
 package response
 
 import (
-	"log"
 	"net/http"
+	"sucicada/home/internal/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,11 +21,10 @@ func Success(ctx *gin.Context, data ...any) {
 	}
 }
 func Bad(ctx *gin.Context, data any) {
-	log.Println("response bad request: ", data)
+	logger.Warn("response bad request: ", data)
 	ctx.JSON(http.StatusBadRequest, Response{Message: "bad request", Data: data})
 }
 func Error(ctx *gin.Context, err error) {
-	log.Println("response error: ", err)
-	ctx.JSON(http.StatusInternalServerError,
-		Response{Message: "error", Error: err.Error()})
+	logger.Error("scp upload error", err)
+	ctx.JSON(http.StatusInternalServerError, Response{Message: "error", Error: err.Error()})
 }
