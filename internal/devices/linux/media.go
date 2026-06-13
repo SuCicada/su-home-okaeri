@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sucicada/home/internal/consts"
-	"sucicada/home/internal/logger"
 	"sucicada/home/internal/structs"
 	"sucicada/home/internal/util"
 
@@ -16,33 +15,12 @@ import (
 
 type sLinuxMedia struct{}
 
-func (l *sLinuxMedia) Get() (any, error) {
-	return l.GetStatus()
-}
-
-func (l *sLinuxMedia) Set(command string) error {
-	var data structs.MediaCommand
-	if err := json.Unmarshal([]byte(command), &data); err != nil {
-		logger.Error("Failed to unmarshal media command: ", err)
-		return err
-	}
-	return l.Execute(data)
-}
-
-//	return {
-//	 "volume": 50,
-//	 "is_mute": false
-//	}
 func (l *sLinuxMedia) GetStatus() (structs.MediaStatus, error) {
 	currentSink, err := sshLinux(`pactl get-default-sink`)
 	if err != nil {
 		return structs.MediaStatus{}, err
 	}
-	//res, err := sshLinux(strings.ReplaceAll(fmt.Sprintf(`
-	//pactl --format=json list sinks
-	//| jq ".[] | select(.name == \"$%s\") | {volume, mute}"`, currentSink),
-	//		"\n", ""))
-	res, err := sshLinux(fmt.Sprintf(`pactl --format=json list sinks`))
+	res, err := sshLinux(`pactl --format=json list sinks`)
 	if err != nil {
 		return structs.MediaStatus{}, err
 	}
@@ -78,12 +56,6 @@ func (l *sLinuxMedia) GetStatus() (structs.MediaStatus, error) {
 
 func (l *sLinuxMedia) Execute(command structs.MediaCommand) error {
 	switch command.Command {
-	// case "play":
-	// 	_, err := sshLinux("playerctl play")
-	// 	return err
-	// case "pause":
-	// 	_, err := sshLinux("playerctl pause")
-	// 	return err
 	case "stop":
 		_, err := sshLinux("pkill ffplay")
 		return err

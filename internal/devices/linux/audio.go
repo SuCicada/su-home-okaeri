@@ -13,14 +13,6 @@ import (
 
 type sLinuxAudio struct{}
 
-func (l *sLinuxAudio) Get() (any, error) {
-	return nil, nil
-}
-
-func (l *sLinuxAudio) Set(command string) error {
-	return nil
-}
-
 func (l *sLinuxAudio) PlayAudio(command structs.AudioPlayRequest) error {
 	localFile, cleanup, err := prepareAudioFile(command)
 	if err != nil {

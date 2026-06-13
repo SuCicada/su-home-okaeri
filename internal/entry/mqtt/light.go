@@ -26,7 +26,7 @@ func RegisterLightRoutes(r *mqttpkg.Router) {
 		if control == nil {
 			continue
 		}
-		if _, ok := control.Control.(devicesstructs.LightController); !ok {
+		if _, ok := control.Controller.(devicesstructs.LightController); !ok {
 			continue
 		}
 
@@ -38,6 +38,7 @@ func RegisterLightRoutes(r *mqttpkg.Router) {
 		}
 
 		r.Subscribe(commandTopic, handleLightCommand(device.Name, stateTopic))
+		go publishLightState(device.Name, stateTopic)
 	}
 }
 
@@ -56,9 +57,10 @@ func handleLightCommand(deviceName string, stateTopic string) mqtt.MessageHandle
 			return
 		}
 
-		if stateTopic != "" {
-			mqttpkg.Publish(stateTopic, payload)
-		}
+		publishLightState(deviceName, stateTopic)
+		//if stateTopic != "" {
+		//	mqttpkg.Publish(stateTopic, payload)
+		//}
 	}
 }
 
@@ -77,4 +79,26 @@ func executeLightCommand(deviceName string, payload *lightCommandPayload) error 
 		return light.SetBrightness(deviceName, command)
 	}
 	return errors.New("invalid light command: " + payload.State)
+}
+
+func publishLightState(deviceName string, stateTopic string) {
+	if stateTopic == "" {
+		return
+	}
+
+	brightness, err := light.GetBrightness(deviceName)
+	if err != nil {
+		logger.Error("Failed to get light brightness: ", err)
+		return
+	}
+
+	payload := lightCommandPayload{
+		State:      "ON",
+		Brightness: brightness,
+	}
+	if brightness <= 0 {
+		payload.State = "OFF"
+	}
+
+	mqttpkg.Publish(stateTopic, payload)
 }

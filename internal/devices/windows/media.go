@@ -24,10 +24,6 @@ type sWindowsMedia struct{}
 
 var WindowsMedia = &sWindowsMedia{}
 
-func (l *sWindowsMedia) Get() (any, error) {
-	return l.GetStatus()
-}
-
 func (l *sWindowsMedia) GetStatus() (structs.MediaStatus, error) {
 	type StatusRes struct {
 		Data structs.MediaStatus `json:"data"`
@@ -41,16 +37,6 @@ func (l *sWindowsMedia) GetStatus() (structs.MediaStatus, error) {
 	snakeCaseJson := strcase.ToSnake(res)
 	err = json.Unmarshal([]byte(snakeCaseJson), &statusRes)
 	return statusRes.Data, err
-}
-
-func (l *sWindowsMedia) Set(command string) error {
-	var commandRequest structs.MediaCommand
-	err := json.Unmarshal([]byte(command), &commandRequest)
-	if err != nil {
-		logger.Error("Failed to unmarshal command: ", err)
-		return err
-	}
-	return l.Execute(commandRequest)
 }
 
 func (l *sWindowsMedia) Execute(commandRequest structs.MediaCommand) error {

@@ -15,7 +15,7 @@ var Device = devicesstructs.DeviceBase{
 	Name: "redmi",
 	DeviceControl: devicesstructs.DeviceControlUnit{
 		Light: &devicesstructs.Control{
-			Control: &sRedmiLight{},
+			Controller: &sRedmiLight{},
 		},
 		// Volume: service.Control{
 		// Control: &sLinuxVolume{},

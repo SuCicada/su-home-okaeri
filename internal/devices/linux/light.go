@@ -1,32 +1,17 @@
 package linux
 
 import (
-	"encoding/json"
 	"fmt"
+	"strings"
 	"sucicada/home/internal/consts"
 	"sucicada/home/internal/logger"
+	"sucicada/home/internal/structs"
 	commandstructs "sucicada/home/internal/structs/command"
 	"sucicada/home/internal/util"
 )
 
-// var LinuxLight = devices.DeviceBase{
-// 	Name: "linux",
-// 	DeviceControl: devices.DeviceControlUnit{
-// 		Light: &devices.Control{
-// 			Control: &sLinuxLight{},
-// 		},
-// 	},
-// }
-
 type sLinuxLight struct{}
 
-//	func (l *sLinuxLight) sshLinux(cmd string) (string, error) {
-//		return util.SSHRunRoot(util.GetSSHConfig("linux"), cmd)
-//	}
-//
-//	func init() {
-//		mqttcontroller.RegisterRoute(Device.Name, sLinuxLight.Set)
-//	}
 func getOpts() string {
 	options := Config.Control[consts.CONTROL_LIGHT]["options"]
 	optionsMap := util.Conv.AnyToMap(options)
@@ -34,9 +19,6 @@ func getOpts() string {
 		return pactlOpts.(string)
 	}
 	return optionsMap["ddcutil"].(string)
-}
-func (l *sLinuxLight) Get() (any, error) {
-	return l.GetBrightness()
 }
 
 func (l *sLinuxLight) GetBrightness() (int, error) {
@@ -52,13 +34,31 @@ func (l *sLinuxLight) GetBrightness() (int, error) {
 	return util.Conv.StrToInt(res), nil
 }
 
-func (l *sLinuxLight) Set(command string) error {
-	var data commandstructs.LightCommand
-	if err := json.Unmarshal([]byte(command), &data); err != nil {
-		logger.Error("Failed to unmarshal light command: ", err)
-		return err
+func (l *sLinuxLight) GetStatus() (structs.LightStatus, error) {
+	brightness, err := l.GetBrightness()
+	if err != nil {
+		return structs.LightStatus{}, err
 	}
-	return l.SetBrightness(data)
+
+	opts := getOpts()
+	res, err := sshLinux(fmt.Sprintf(
+		`ddcutil %s getvcp D6 | grep -i "current value" | awk '{print $9}' | tr -d ','`,
+		opts,
+	))
+	if err != nil {
+		return structs.LightStatus{
+			Power:      brightness > 0,
+			Brightness: brightness,
+		}, nil
+	}
+
+	powerCode := strings.TrimSpace(res)
+	power := powerCode == "01" || (powerCode != "05" && brightness > 0)
+
+	return structs.LightStatus{
+		Power:      power,
+		Brightness: brightness,
+	}, nil
 }
 
 func (l *sLinuxLight) SetBrightness(command commandstructs.LightCommand) error {
