@@ -11,6 +11,7 @@ import (
 	deviceservice "sucicada/home/internal/service/devices"
 	commandstructs "sucicada/home/internal/structs/command"
 	devicesstructs "sucicada/home/internal/structs/devices"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -43,6 +44,9 @@ func RegisterLightRoutes(r *mqttpkg.Router) {
 }
 
 func handleLightCommand(deviceName string, stateTopic string) mqtt.MessageHandler {
+	publishStatus := func() { publishLightState(deviceName, stateTopic) }
+	startStatusTicker(publishStatus, 10*time.Second)
+
 	return func(client mqtt.Client, message mqtt.Message) {
 		payload := lightCommandPayload{}
 		logger.Info("Received light command: ", string(message.Payload()))
@@ -57,7 +61,8 @@ func handleLightCommand(deviceName string, stateTopic string) mqtt.MessageHandle
 			return
 		}
 
-		publishLightState(deviceName, stateTopic)
+		// publishLightState(deviceName, stateTopic)
+		publishStatus()
 		//if stateTopic != "" {
 		//	mqttpkg.Publish(stateTopic, payload)
 		//}
@@ -86,18 +91,19 @@ func publishLightState(deviceName string, stateTopic string) {
 		return
 	}
 
-	brightness, err := light.GetBrightness(deviceName)
+	status, err := light.GetStatus(deviceName)
 	if err != nil {
-		logger.Error("Failed to get light brightness: ", err)
+		logger.Error("Failed to get light status: ", err)
 		return
 	}
 
-	payload := lightCommandPayload{
-		State:      "ON",
-		Brightness: brightness,
+	state := "OFF"
+	if status.Power {
+		state = "ON"
 	}
-	if brightness <= 0 {
-		payload.State = "OFF"
+	payload := lightCommandPayload{
+		State:      state,
+		Brightness: status.Brightness,
 	}
 
 	mqttpkg.Publish(stateTopic, payload)

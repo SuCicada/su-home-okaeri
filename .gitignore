@@ -35,9 +35,10 @@ go.work.sum
 .DS_Store
 Thumbs.db
 
-go.sum
 /tmp/
 config.yaml
 /home/
 .gocache
 .cache
+/home
+__pycache__/

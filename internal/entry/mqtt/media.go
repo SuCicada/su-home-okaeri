@@ -99,7 +99,7 @@ func handleMediaLinux(deviceName string, topics mediaTopics) mqtt.MessageHandler
 
 func handleMediaWindows(deviceName string, topics mediaTopics) mqtt.MessageHandler {
 	syncStatus := syncMediaStatus(deviceName, topics)
-	startMediaStatusTicker(syncStatus)
+	startStatusTicker(syncStatus, 10*time.Second)
 
 	return func(client mqtt.Client, message mqtt.Message) {
 		logger.Info("Received media command: ", string(message.Payload()))
@@ -139,14 +139,4 @@ func syncMediaStatus(deviceName string, topics mediaTopics) func() {
 			mqttpkg.Publish(topics.Status, status)
 		}
 	}
-}
-
-func startMediaStatusTicker(syncStatus func()) {
-	go func() {
-		syncStatus()
-		ticker := time.NewTicker(10 * time.Second)
-		for range ticker.C {
-			syncStatus()
-		}
-	}()
 }

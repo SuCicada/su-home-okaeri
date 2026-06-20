@@ -42,7 +42,7 @@ func (l *sLinuxLight) GetStatus() (structs.LightStatus, error) {
 
 	opts := getOpts()
 	res, err := sshLinux(fmt.Sprintf(
-		`ddcutil %s getvcp D6 | grep -i "current value" | awk '{print $9}' | tr -d ','`,
+		`ddcutil %s getvcp D6 | grep -i "DPM:" | awk '{print $8}' | tr -d ','`,
 		opts,
 	))
 	if err != nil {
@@ -52,8 +52,8 @@ func (l *sLinuxLight) GetStatus() (structs.LightStatus, error) {
 		}, nil
 	}
 
-	powerCode := strings.TrimSpace(res)
-	power := powerCode == "01" || (powerCode != "05" && brightness > 0)
+	powerCode := strings.ToUpper(strings.TrimSpace(res))
+	power := powerCode == "ON" && brightness > 0
 
 	return structs.LightStatus{
 		Power:      power,

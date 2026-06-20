@@ -2,15 +2,16 @@ package light
 
 import (
 	deviceservice "sucicada/home/internal/service/devices"
+	"sucicada/home/internal/structs"
 	commandstructs "sucicada/home/internal/structs/command"
 )
 
-func GetBrightness(deviceName string) (int, error) {
+func GetStatus(deviceName string) (structs.LightStatus, error) {
 	controller, err := deviceservice.GetLightController(deviceName)
 	if err != nil {
-		return 0, err
+		return structs.LightStatus{}, err
 	}
-	return controller.GetBrightness()
+	return controller.GetStatus()
 }
 
 func SetBrightness(deviceName string, command commandstructs.LightCommand) error {
