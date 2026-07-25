@@ -13,6 +13,6 @@ script/
 config.yaml
 *.md
 Makefile
-./.dockerignore
-./.editorconfig
-./docker-compose.yml
+.dockerignore
+.editorconfig
+docker-compose.yml

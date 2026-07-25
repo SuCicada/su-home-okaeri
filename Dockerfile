@@ -40,7 +40,8 @@ RUN userdel -r ubuntu 2>/dev/null || true && \
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y \
-    ssh-client
+    ssh-client \
+    net-tools iputils-ping iproute2
 
 # 从构建阶段复制二进制文件
 COPY --from=builder /app/su-home-okaeri /home/$USER/
