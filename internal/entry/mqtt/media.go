@@ -117,12 +117,7 @@ func handleMediaWindows(deviceName string, topics mediaTopics) mqtt.MessageHandl
 			return
 		}
 
-		// 操作后不要只同步一次，做几次延迟校准
-		syncStatus()
-		time.Sleep(100 * time.Millisecond)
-		syncStatus()
-		time.Sleep(500 * time.Millisecond)
-		syncStatus()
+		syncWithMultiTry(syncStatus)
 	}
 }
 

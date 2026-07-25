@@ -62,7 +62,7 @@ func handleLightCommand(deviceName string, stateTopic string) mqtt.MessageHandle
 		}
 
 		// publishLightState(deviceName, stateTopic)
-		publishStatus()
+		syncWithMultiTry(publishStatus)
 		//if stateTopic != "" {
 		//	mqttpkg.Publish(stateTopic, payload)
 		//}

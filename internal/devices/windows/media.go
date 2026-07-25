@@ -17,7 +17,6 @@ import (
 	"sucicada/home/internal/util"
 
 	"github.com/iancoleman/strcase"
-	"resty.dev/v3"
 )
 
 type sWindowsMedia struct{}
@@ -129,34 +128,16 @@ func doRequest(method, apiPath string, body any) (string, error) {
 	logger.Info("windows media APIBaseURL:", mediaConfig.APIBaseURL)
 	logger.Info("windows media req:", method, apiPath)
 
-	req := resty.New().
-		//SetDebug(true).
-		SetBaseURL(mediaConfig.APIBaseURL).
-		R()
-
-	if body != nil {
-		req.SetBody(body)
-	}
-
-	var res *resty.Response
-	switch method {
-	case "GET":
-		res, err = req.Get(apiPath)
-	case "POST":
-		res, err = req.Post(apiPath)
-	default:
-		return "", errors.New("unsupported HTTP method: " + method)
-	}
-
+	res, err := util.Request.Do(method, mediaConfig.APIBaseURL+apiPath, body)
 	if err != nil {
 		logger.Error("send request error: ", err)
 		return "", err
 	}
 	var controllerResponse ControllerResponse
-	json.Unmarshal(res.Bytes(), &controllerResponse)
-	if res.IsError() || !controllerResponse.Success {
-		logger.Error("controller response is not success: ", res.StatusCode(), res.String())
+	json.Unmarshal([]byte(res), &controllerResponse)
+	if !controllerResponse.Success {
+		logger.Error("controller response is not success: ", res)
 		return "", errors.New("controller response is not success")
 	}
-	return res.String(), nil
+	return res, nil
 }
