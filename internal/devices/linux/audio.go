@@ -3,6 +3,7 @@ package linux
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sucicada/home/internal/cfg"
@@ -29,6 +30,13 @@ func (l *sLinuxAudio) PlayAudio(command structs.AudioPlayRequest) error {
 	}
 
 	_, err = util.SSH.SSHRun(sshConfig, "ffplay -nodisp -autoexit "+remoteFile)
+	if err != nil {
+		logger.Error("ffplay error", err)
+		return err
+	}
+	// remove remote file
+	util.SSH.SSHRun(sshConfig, fmt.Sprintf("mv %s /tmp/su-home-audio-trash.trash", remoteFile))
+
 	return err
 }
 
