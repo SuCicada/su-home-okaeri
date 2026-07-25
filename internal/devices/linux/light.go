@@ -13,8 +13,7 @@ import (
 type sLinuxLight struct{}
 
 func getOpts() string {
-	options := Config.Control[consts.CONTROL_LIGHT]["options"]
-	optionsMap := util.Conv.AnyToMap(options)
+	optionsMap := controlOptions(consts.CONTROL_LIGHT)
 	if pactlOpts, ok := optionsMap["ddcutil"]; ok {
 		return pactlOpts.(string)
 	}

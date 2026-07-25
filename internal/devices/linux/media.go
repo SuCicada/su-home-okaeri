@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sucicada/home/internal/consts"
 	"sucicada/home/internal/structs"
-	"sucicada/home/internal/util"
 
 	"github.com/samber/lo"
 )
@@ -86,8 +85,7 @@ func (l *sLinuxMedia) Execute(command structs.MediaCommand) error {
 }
 
 func getPactlSink() string {
-	options := Config.Control[consts.CONTROL_MEDIA]["options"]
-	optionsMap := util.Conv.AnyToMap(options)
+	optionsMap := controlOptions(consts.CONTROL_MEDIA)
 	if sink, ok := optionsMap["pactl"]; ok {
 		return fmt.Sprint(sink)
 	}

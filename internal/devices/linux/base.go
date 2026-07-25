@@ -24,10 +24,13 @@ var Device = devicesstructs.DeviceBase{
 	},
 }
 
-var Config = cfg.GetDeviceConfig(Device.Name)
-
 func sshLinux(cmd string) (string, error) {
 	var res, err = util.SSH.SSHRun(cfg.GetSSHConfig(Device.Name), cmd)
 	res = strings.TrimSpace(res)
 	return res, err
+}
+
+func controlOptions(control string) map[string]any {
+	options := cfg.GetDeviceConfig(Device.Name).Control[control]["options"]
+	return util.Conv.AnyToMap(options)
 }
