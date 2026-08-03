@@ -15,11 +15,11 @@ import (
 type sLinuxMedia struct{}
 
 func (l *sLinuxMedia) GetStatus() (structs.MediaStatus, error) {
-	currentSink, err := sshLinux(`pactl get-default-sink`)
+	currentSink, err := SSHLinux(`pactl get-default-sink`)
 	if err != nil {
 		return structs.MediaStatus{}, err
 	}
-	res, err := sshLinux(`pactl --format=json list sinks`)
+	res, err := SSHLinux(`pactl --format=json list sinks`)
 	if err != nil {
 		return structs.MediaStatus{}, err
 	}
@@ -56,15 +56,15 @@ func (l *sLinuxMedia) GetStatus() (structs.MediaStatus, error) {
 func (l *sLinuxMedia) Execute(command structs.MediaCommand) error {
 	switch command.Command {
 	case "stop":
-		_, err := sshLinux("pkill ffplay")
+		_, err := SSHLinux("pkill ffplay")
 		return err
 
 	case "mute":
 		if command.Args["mute"] == "true" {
-			_, err := sshLinux(fmt.Sprintf("pactl set-sink-mute %s true", getPactlSink()))
+			_, err := SSHLinux(fmt.Sprintf("pactl set-sink-mute %s true", getPactlSink()))
 			return err
 		} else {
-			_, err := sshLinux(fmt.Sprintf("pactl set-sink-mute %s false", getPactlSink()))
+			_, err := SSHLinux(fmt.Sprintf("pactl set-sink-mute %s false", getPactlSink()))
 			return err
 		}
 
@@ -73,7 +73,7 @@ func (l *sLinuxMedia) Execute(command structs.MediaCommand) error {
 		if err != nil {
 			return err
 		}
-		_, err = sshLinux(fmt.Sprintf(
+		_, err = SSHLinux(fmt.Sprintf(
 			"pactl set-sink-volume %s %d%%",
 			getPactlSink(),
 			volume,

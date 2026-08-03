@@ -47,7 +47,12 @@ func (u *uSSH) SCPUploadContext(ctx context.Context, config appconfig.SSHConfig,
 	}
 	args = append(args, "-o", "StrictHostKeyChecking=no")
 	args = append(args, localFile, u.sshHost(config)+":"+remoteFile)
-	_, err := u.runCommandContext(ctx, "scp", args...)
+	result, err := u.runCommandContext(ctx, "scp", args...)
+	if err != nil {
+		if trimmed := strings.TrimSpace(result); trimmed != "" {
+			return fmt.Errorf("%w: %s", err, trimmed)
+		}
+	}
 	return err
 }
 
@@ -69,6 +74,9 @@ func (u *uSSH) SSHRunCommandOutputContext(ctx context.Context, config appconfig.
 	logger.Info("Output of SSH command:", logRes)
 	if err != nil {
 		logger.Error("Error executing SSH command:", err)
+		if trimmed := strings.TrimSpace(result); trimmed != "" {
+			err = fmt.Errorf("%w: %s", err, trimmed)
+		}
 	}
 	return result, err
 }
@@ -102,9 +110,11 @@ func (u *uSSH) sshArgs(config appconfig.SSHConfig, cmd string) []string {
 func (u *uSSH) runCommandContext(ctx context.Context, name string, args ...string) (string, error) {
 	var output bytes.Buffer
 	command := exec.CommandContext(ctx, name, args...)
-	//command.Stdout = io.MultiWriter(os.Stdout, &output)
-	command.Stdout = &output
-	command.Stderr = io.MultiWriter(os.Stderr, &output)
+	// Stdout/Stderr 必须是同一个 Writer，exec 才会串行化写入；
+	// 否则并发写 bytes.Buffer 会丢输出。
+	w := io.MultiWriter(os.Stderr, &output)
+	command.Stdout = w
+	command.Stderr = w
 	err := command.Run()
 	return output.String(), err
 }

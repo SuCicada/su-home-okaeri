@@ -24,7 +24,7 @@ var Device = devicesstructs.DeviceBase{
 	},
 }
 
-func sshLinux(cmd string) (string, error) {
+func SSHLinux(cmd string) (string, error) {
 	var res, err = util.SSH.SSHRun(cfg.GetSSHConfig(Device.Name), cmd)
 	res = strings.TrimSpace(res)
 	return res, err

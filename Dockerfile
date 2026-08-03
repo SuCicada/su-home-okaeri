@@ -19,7 +19,11 @@ COPY . .
 # 构建应用
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -v -o su-home-okaeri .
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -v -o su-home-okaeri cmd/home/main.go
+
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -v -o su-home-okaeri-monitor cmd/monitor/main.go
 
 # ---- Production Stage ----
 # FROM kroniak/ssh-client
@@ -45,6 +49,7 @@ RUN apt-get update && \
 
 # 从构建阶段复制二进制文件
 COPY --from=builder /app/su-home-okaeri /home/$USER/
+COPY --from=builder /app/su-home-okaeri-monitor /home/$USER/
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
@@ -52,4 +57,4 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 41406
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["./su-home-okaeri"]
+#CMD ["./su-home-okaeri"]

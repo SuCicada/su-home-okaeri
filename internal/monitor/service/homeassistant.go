@@ -1,12 +1,9 @@
 package service
 
 import (
-	"context"
-	"fmt"
-	"os/exec"
 	"strings"
 	"sucicada/home/internal/cfg"
-	"time"
+	"sucicada/home/internal/devices/linux"
 
 	amwebhook "github.com/prometheus/alertmanager/notify/webhook"
 
@@ -14,23 +11,16 @@ import (
 )
 
 type HomeAssistantService struct{}
+
 const APPRISE_TAG = "mail"
+
 // func NewHomeAssistantService(send appriseSender, restart restartAction) *HomeAssistantService {
 // return &HomeAssistantService{send: send, restart: restart}
 // }
 func RestartHomeAssistant() error {
 	homeAssistantRestartScript := cfg.GetConfig().Monitor.HomeAssistant.RestartScript
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-
-	output, err := exec.CommandContext(ctx, "sh", homeAssistantRestartScript).CombinedOutput()
-	if err != nil {
-		if len(output) > 0 {
-			return fmt.Errorf("%w: %s", err, strings.TrimSpace(string(output)))
-		}
-		return err
-	}
-	return nil
+	_, err := linux.SSHLinux(homeAssistantRestartScript)
+	return err
 }
 
 func IsHomeAssistantDown(w amwebhook.Message) bool {

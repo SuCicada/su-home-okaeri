@@ -22,7 +22,7 @@ func getOpts() string {
 
 func (l *sLinuxLight) GetBrightness() (int, error) {
 	opts := getOpts()
-	res, err := sshLinux(fmt.Sprintf(`
+	res, err := SSHLinux(fmt.Sprintf(`
 		ddcutil %s getvcp 10 | grep -i "current value" | awk '{print $9}' | tr -d ','
 	`, opts))
 
@@ -40,7 +40,7 @@ func (l *sLinuxLight) GetStatus() (structs.LightStatus, error) {
 	}
 
 	opts := getOpts()
-	res, err := sshLinux(fmt.Sprintf(
+	res, err := SSHLinux(fmt.Sprintf(
 		`ddcutil %s getvcp D6 | grep -i "DPM:" | awk '{print $8}' | tr -d ','`,
 		opts,
 	))
@@ -61,7 +61,7 @@ func (l *sLinuxLight) GetStatus() (structs.LightStatus, error) {
 }
 
 func (l *sLinuxLight) SetBrightness(command commandstructs.LightCommand) error {
-	_, err := sshLinux(fmt.Sprintf(`
+	_, err := SSHLinux(fmt.Sprintf(`
 	ddcutil %s setvcp 10 %d
 	`, getOpts(), command.Light))
 
@@ -77,7 +77,7 @@ func (l *sLinuxLight) Off() error {
 }
 
 func (l *sLinuxLight) setPowerMode(value string) error {
-	_, err := sshLinux(fmt.Sprintf(`
+	_, err := SSHLinux(fmt.Sprintf(`
 	ddcutil %s setvcp D6 %s
 	`, getOpts(), value))
 	return err

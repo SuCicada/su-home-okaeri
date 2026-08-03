@@ -49,7 +49,7 @@ func (u *uRequest) Do(method, url string, body any) (string, error) {
 		logger.Error("send request error: ", err)
 		return "", err
 	}
-	if res.IsError() {
+	if res.IsStatusFailure() {
 		logger.Error("controller response is not success: ", res.StatusCode(), res.String())
 		return "", errors.New("controller response is not success")
 	}
