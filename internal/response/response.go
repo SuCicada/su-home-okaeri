@@ -25,6 +25,6 @@ func Bad(ctx *gin.Context, data any) {
 	ctx.JSON(http.StatusBadRequest, Response{Message: "bad request", Data: data})
 }
 func Error(ctx *gin.Context, err error) {
-	logger.Error("scp upload error", err)
+	logger.Error("error", err)
 	ctx.JSON(http.StatusInternalServerError, Response{Message: "error", Error: err.Error()})
 }

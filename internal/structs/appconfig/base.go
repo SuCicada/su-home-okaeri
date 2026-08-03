@@ -5,4 +5,6 @@ type AppConfig struct {
 	SMSCheck SMSCheckConfig          `yaml:"sms_check"`
 	Alert    AlertConfig             `yaml:"alert"`
 	MQTT     MqttConfig              `yaml:"mqtt"`
+
+	Monitor MonitorConfig `yaml:"monitor"`
 }
