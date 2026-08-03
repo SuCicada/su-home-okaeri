@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"os/signal"
 	"sucicada/home/internal"
 	"sucicada/home/internal/cfg"
 	"sucicada/home/internal/devices"
 	mqttentry "sucicada/home/internal/entry/mqtt"
 	"sucicada/home/internal/mqttpkg"
-	"syscall"
+	"sucicada/home/internal/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -39,22 +36,6 @@ func main() {
 	cfg.LoadConfig("config.yaml")
 
 	Init()
-	InitExitSignal()
+	util.Server.InitExitSignal(Close)
 	InitHttp()
-}
-
-func InitExitSignal() {
-	// システム信号を受信する
-	go func() {
-		sigChan := make(chan os.Signal, 1)
-		defer close(sigChan)
-		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-		sig := <-sigChan
-		fmt.Printf("get signal: %v\n", sig)
-
-		Close()
-
-		os.Exit(0)
-	}()
 }
