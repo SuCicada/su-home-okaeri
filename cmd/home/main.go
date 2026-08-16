@@ -7,6 +7,7 @@ import (
 	mqttentry "sucicada/home/internal/entry/mqtt"
 	"sucicada/home/internal/mqttpkg"
 	"sucicada/home/internal/util"
+	"sucicada/home/internal/util/tinyssh"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -27,6 +28,7 @@ func InitHttp() {
 }
 func Close() {
 	mqttpkg.Close()
+	tinyssh.SSH.CloseMasters()
 }
 
 func main() {
