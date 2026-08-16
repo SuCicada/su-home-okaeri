@@ -16,3 +16,5 @@ Makefile
 .dockerignore
 .editorconfig
 docker-compose.yml
+su-home-okaeri
+su-home-okaeri-*

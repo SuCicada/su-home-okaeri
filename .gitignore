@@ -42,3 +42,7 @@ config.yaml
 .cache
 /home
 __pycache__/
+docker-compose.yml
+/su-home-okaeri
+/su-home-okaeri-*
+
