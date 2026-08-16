@@ -9,7 +9,7 @@ import (
 	"sucicada/home/internal/cfg"
 	"sucicada/home/internal/logger"
 	"sucicada/home/internal/structs"
-	"sucicada/home/internal/util"
+	"sucicada/home/internal/util/tinyssh"
 )
 
 type sLinuxAudio struct{}
@@ -24,18 +24,18 @@ func (l *sLinuxAudio) PlayAudio(command structs.AudioPlayRequest) error {
 	remoteFile := filepath.Join("/tmp", filepath.Base(localFile))
 	sshConfig := cfg.GetSSHConfig(Device.Name)
 
-	if err := util.SSH.SCPUpload(sshConfig, localFile, remoteFile); err != nil {
+	if err := tinyssh.SSH.SCPUpload(sshConfig, localFile, remoteFile); err != nil {
 		logger.Error("scp upload error", err)
 		return err
 	}
 
-	_, err = util.SSH.SSHRun(sshConfig, "ffplay -nodisp -autoexit "+remoteFile)
+	_, err = tinyssh.SSH.SSHRun(sshConfig, "ffplay -nodisp -autoexit "+remoteFile)
 	if err != nil {
 		logger.Error("ffplay error", err)
 		return err
 	}
 	// remove remote file
-	util.SSH.SSHRun(sshConfig, fmt.Sprintf("mv %s /tmp/su-home-audio-trash.trash", remoteFile))
+	tinyssh.SSH.SSHRun(sshConfig, fmt.Sprintf("mv %s /tmp/su-home-audio-trash.trash", remoteFile))
 
 	return err
 }

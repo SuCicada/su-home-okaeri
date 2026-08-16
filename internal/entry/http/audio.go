@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 	"os"
 	"sucicada/home/internal/app/audio"
+	"sucicada/home/internal/logger"
 	"sucicada/home/internal/response"
 	"sucicada/home/internal/structs"
 
@@ -21,12 +22,20 @@ func playAudio(ctx *gin.Context) {
 		response.Bad(ctx, err.Error())
 		return
 	}
-	defer cleanup()
 
-	if err := audio.PlayAudio(ctx.Param("device"), command); err != nil {
-		response.Error(ctx, err)
-		return
-	}
+	// gin.Context 在 handler 返回后会被复用，goroutine 里不能再碰它。
+	device := ctx.Param("device")
+
+	// 播放会一直阻塞到音频放完，不能占着 HTTP 连接不放，
+	// 否则调用方会先超时断开，然后重试，结果是两个 ffplay 叠着放。
+	// cleanup 的所有权一并交给这个 goroutine —— handler 返回时不能删掉还没上传的文件。
+	go func() {
+		defer cleanup()
+		if err := audio.PlayAudio(device, command); err != nil {
+			logger.Error("play audio error: ", err)
+		}
+	}()
+
 	response.Success(ctx)
 }
 

@@ -5,6 +5,7 @@ import (
 	"sucicada/home/internal/cfg"
 	devicesstructs "sucicada/home/internal/structs/devices"
 	"sucicada/home/internal/util"
+	"sucicada/home/internal/util/tinyssh"
 )
 
 var Device = devicesstructs.DeviceBase{
@@ -25,7 +26,7 @@ var Device = devicesstructs.DeviceBase{
 }
 
 func SSHLinux(cmd string) (string, error) {
-	var res, err = util.SSH.SSHRun(cfg.GetSSHConfig(Device.Name), cmd)
+	var res, err = tinyssh.SSH.SSHRun(cfg.GetSSHConfig(Device.Name), cmd)
 	res = strings.TrimSpace(res)
 	return res, err
 }
