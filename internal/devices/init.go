@@ -2,6 +2,7 @@ package devices
 
 import (
 	"sucicada/home/internal/devices/linux"
+	"sucicada/home/internal/devices/mac"
 	"sucicada/home/internal/devices/redmi"
 	"sucicada/home/internal/devices/windows"
 	deviceservice "sucicada/home/internal/service/devices"
@@ -12,6 +13,7 @@ var Devices = []devicesstructs.DeviceBase{
 	linux.Device,
 	redmi.Device,
 	windows.Device,
+	mac.Device,
 }
 
 func Init() {
