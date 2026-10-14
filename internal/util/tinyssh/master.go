@@ -2,6 +2,8 @@ package tinyssh
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -37,6 +39,7 @@ type sshMaster struct {
 	cancel context.CancelFunc
 	done   chan struct{}
 	sem    chan struct{}
+	socket string
 }
 
 var (
@@ -47,11 +50,9 @@ var (
 	sshControlPathVal  string
 )
 
-// sshControlPath 返回本程序专用的 control socket 路径模板。
+// sshControlDir 是本程序专用的 control socket 目录。
 // 不复用 ~/.ssh/config 里的路径，避免和用户交互式终端的 master 互相干扰。
-// %C 由 ssh 自己展开成 (本机, 目标host, port, user) 的 hash，
-// 顺便保证路径够短 —— unix socket 路径上限只有 108 字节。
-func sshControlPath() string {
+func sshControlDir() string {
 	sshControlPathOnce.Do(func() {
 		base := os.Getenv("XDG_RUNTIME_DIR")
 		if base == "" {
@@ -62,9 +63,23 @@ func sshControlPath() string {
 			logger.Error("创建 SSH control 目录失败: ", err)
 			dir = os.TempDir()
 		}
-		sshControlPathVal = filepath.Join(dir, "cm-%C")
+		sshControlPathVal = dir
 	})
 	return sshControlPathVal
+}
+
+// controlSocket 返回这个目标主机专用的 socket 路径。
+// 自己算 hash，路径既够短（unix socket 上限约 108 字节），也能在 master 死掉后把文件删掉。
+// 留给 ssh 的 %C 展开后，进程自己不知道真实文件名，残留文件会让下一次 ssh -M 放弃复用。
+func (u *uSSH) controlSocket(config appconfig.SSHConfig) string {
+	sum := sha256.Sum256([]byte(fmt.Sprintf("%s:%d", u.sshHost(config), config.Port)))
+	return filepath.Join(sshControlDir(), "cm-"+hex.EncodeToString(sum[:8]))
+}
+
+func (u *uSSH) removeControlSocket(config appconfig.SSHConfig) {
+	if err := os.Remove(u.controlSocket(config)); err != nil && !os.IsNotExist(err) {
+		logger.Error("删除 SSH control socket 失败: ", err)
+	}
 }
 
 func (u *uSSH) master(config appconfig.SSHConfig) *sshMaster {
@@ -99,8 +114,10 @@ func (m *sshMaster) ensure(u *uSSH, config appconfig.SSHConfig) error {
 		return nil
 	}
 	m.stopLocked()
-	// 可能有上次进程被强杀留下的死 socket，先清掉。
+	// 可能有上次进程被强杀留下的死 socket。ssh -O exit 删不掉没人监听的文件，
+	// 文件还在的话，新的 ssh -M 会打印 "already exists, disabling multiplexing" 然后永远等不到就绪。
 	u.controlCommand(config, "exit")
+	u.removeControlSocket(config)
 	return m.start(u, config)
 }
 
@@ -110,6 +127,7 @@ func (m *sshMaster) reset(u *uSSH, config appconfig.SSHConfig) {
 	defer m.lock.Unlock()
 	m.stopLocked()
 	u.controlCommand(config, "exit")
+	u.removeControlSocket(config)
 }
 
 func (m *sshMaster) aliveLocked() bool {
@@ -125,11 +143,14 @@ func (m *sshMaster) aliveLocked() bool {
 }
 
 func (m *sshMaster) start(u *uSSH, config appconfig.SSHConfig) error {
+	socket := u.controlSocket(config)
+	m.socket = socket
+
 	args := u.portArgs(config, "-p")
 	args = append(args, u.commonArgs()...)
 	args = append(args,
 		"-M", "-N",
-		"-o", "ControlPath="+sshControlPath(),
+		"-o", "ControlPath="+socket,
 		// 不让 ssh 自己把 master 转后台，进程由本程序持有并回收。
 		"-o", "ControlPersist=no",
 		// 对端静默掉线时主动发现，而不是留一个连不上的死 socket。
@@ -191,9 +212,14 @@ func (m *sshMaster) stopLocked() {
 			logger.Error("SSH master 未在超时内退出")
 		}
 	}
+	if m.socket != "" {
+		if err := os.Remove(m.socket); err != nil && !os.IsNotExist(err) {
+			logger.Error("删除 SSH control socket 失败: ", err)
+		}
+	}
 	m.clearLocked()
 }
 
 func (m *sshMaster) clearLocked() {
-	m.cmd, m.cancel, m.done = nil, nil, nil
+	m.cmd, m.cancel, m.done, m.socket = nil, nil, nil, ""
 }

@@ -18,25 +18,19 @@ type uSSH struct{}
 var SSH uSSH
 
 func (u *uSSH) SSHRunRoot(config appconfig.SSHConfig, cmd string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 	logger.Info("cmd:", cmd)
 	sudocmd := fmt.Sprintf("sudo %s", strings.TrimSpace(cmd))
 
-	return u.SSHRunCommandOutputContext(ctx, config, sudocmd)
+	return u.SSHRunCommandOutputContext(context.Background(), config, sudocmd)
 }
 
 func (u *uSSH) SSHRun(config appconfig.SSHConfig, cmd string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 	logger.Info("cmd:", cmd)
-	return u.SSHRunCommandOutputContext(ctx, config, cmd)
+	return u.SSHRunCommandOutputContext(context.Background(), config, cmd)
 }
 
 func (u *uSSH) SCPUpload(config appconfig.SSHConfig, localFile string, remoteFile string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	return u.SCPUploadContext(ctx, config, localFile, remoteFile)
+	return u.SCPUploadContext(context.Background(), config, localFile, remoteFile)
 }
 
 // CloseMasters 关闭所有常驻 master 连接，进程退出时调用。
@@ -60,6 +54,10 @@ func (u *uSSH) CloseMasters() {
 func (u *uSSH) SCPUploadContext(ctx context.Context, config appconfig.SSHConfig, localFile string, remoteFile string) error {
 	m := u.master(config)
 	mux := m.ensure(u, config) == nil
+
+	// 建连不算进命令超时，否则 master 空等会把 ffplay 的时间吃光。
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 
 	release, err := m.acquire(ctx)
 	if err != nil {
@@ -92,6 +90,10 @@ func (u *uSSH) SSHRunCommandOutputContext(ctx context.Context, config appconfig.
 		logger.Error("SSH 复用连接不可用，降级为直连: ", err)
 		mux = false
 	}
+
+	// 建连不算进命令超时，否则 master 空等会把 ffplay 的时间吃光。
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 
 	release, err := m.acquire(ctx)
 	if err != nil {
@@ -139,10 +141,10 @@ func (u *uSSH) portArgs(config appconfig.SSHConfig, flag string) []string {
 
 // muxArgs 复用 master 的连接；mux 为 false 时退回独立连接。
 // ControlMaster=no 的语义是「不要成为 master，但可以复用已有 socket」。
-func (u *uSSH) muxArgs(mux bool) []string {
+func (u *uSSH) muxArgs(config appconfig.SSHConfig, mux bool) []string {
 	path := "none"
 	if mux {
-		path = sshControlPath()
+		path = u.controlSocket(config)
 	}
 	return []string{"-o", "ControlMaster=no", "-o", "ControlPath=" + path}
 }
@@ -153,13 +155,15 @@ func (u *uSSH) commonArgs() []string {
 		// 连不上时快速失败，而不是等外层 context 把进程 kill 掉。
 		"-o", "ConnectTimeout=10",
 		"-o", "BatchMode=yes",
+		// 压掉 "Permanently added ... to the list of known hosts"，那不是命令失败。
+		"-o", "LogLevel=ERROR",
 	}
 }
 
 func (u *uSSH) sshArgs(config appconfig.SSHConfig, cmd string, mux bool) []string {
 	args := u.portArgs(config, "-p")
 	args = append(args, u.commonArgs()...)
-	args = append(args, u.muxArgs(mux)...)
+	args = append(args, u.muxArgs(config, mux)...)
 	args = append(args, u.sshHost(config), cmd)
 	return args
 }
@@ -167,7 +171,7 @@ func (u *uSSH) sshArgs(config appconfig.SSHConfig, cmd string, mux bool) []strin
 func (u *uSSH) scpArgs(config appconfig.SSHConfig, localFile string, remoteFile string, mux bool) []string {
 	args := u.portArgs(config, "-P")
 	args = append(args, u.commonArgs()...)
-	args = append(args, u.muxArgs(mux)...)
+	args = append(args, u.muxArgs(config, mux)...)
 	args = append(args, localFile, u.sshHost(config)+":"+remoteFile)
 	return args
 }
@@ -175,6 +179,7 @@ func (u *uSSH) scpArgs(config appconfig.SSHConfig, localFile string, remoteFile 
 func (u *uSSH) runCommandContext(ctx context.Context, name string, args ...string) (string, string, error) {
 	var output syncBuffer
 	command := exec.CommandContext(ctx, name, args...)
+	command.WaitDelay = 2 * time.Second
 	command.Stdout = io.MultiWriter(os.Stderr, &output)
 
 	var errOutput syncBuffer
@@ -194,7 +199,7 @@ func (u *uSSH) controlCommand(config appconfig.SSHConfig, action string) error {
 	defer cancel()
 
 	args := u.portArgs(config, "-p")
-	args = append(args, "-o", "ControlPath="+sshControlPath())
+	args = append(args, "-o", "ControlPath="+u.controlSocket(config))
 	args = append(args, "-O", action, u.sshHost(config))
 
 	cmd := exec.CommandContext(ctx, "ssh", args...)
