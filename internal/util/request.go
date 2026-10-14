@@ -24,7 +24,7 @@ var Request uRequest
 // }
 
 func (u *uRequest) Do(method, url string, body any) (string, error) {
-	logger.Info("request url:", method, url)
+	logger.Debug("request url:", method, url)
 	var err error
 
 	req := resty.New().

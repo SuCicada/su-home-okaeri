@@ -46,3 +46,4 @@ docker-compose.yml
 /su-home-okaeri
 /su-home-okaeri-*
 
+config.*.yaml

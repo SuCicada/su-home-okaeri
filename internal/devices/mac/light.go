@@ -58,11 +58,13 @@ func (l *sMacLight) SetBrightness(command commandstructs.LightCommand) error {
 }
 
 func (l *sMacLight) On() error {
+	logger.Info("Turning on light")
 	_, err := doRequest("POST", "/on", nil)
 	return err
 }
 
 func (l *sMacLight) Off() error {
+	logger.Info("Turning off light")
 	_, err := doRequest("POST", "/off", nil)
 	return err
 }

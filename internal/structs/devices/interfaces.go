@@ -3,6 +3,7 @@ package devicesstructs
 import (
 	"sucicada/home/internal/structs"
 	commandstructs "sucicada/home/internal/structs/command"
+	"time"
 )
 
 type DeviceBase struct {
@@ -17,10 +18,11 @@ type DeviceControlUnit struct {
 }
 
 type Control struct {
-	Name       string
-	Device     *DeviceBase
-	MqttId     string
-	Controller any
+	Name         string
+	Device       *DeviceBase
+	MqttId       string
+	Controller   any
+	PollInterval time.Duration
 }
 
 type MediaController interface {

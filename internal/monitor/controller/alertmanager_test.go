@@ -19,11 +19,11 @@ import (
 )
 
 func mockConfig() {
-	cfg.CONFIG_PATH = "/Users/peng/PROGRAM/GitHub/su-home-okaeri/config.yaml"
+	os.Setenv("CONFIG_FILE", "/Users/peng/PROGRAM/GitHub/su-home-okaeri/config.yaml")
 	originConfig := cfg.GetConfig()
 
 	file := "/tmp/config.yaml"
-	cfg.CONFIG_PATH = file
+	os.Setenv("CONFIG_FILE", file)
 
 	config := &appconfig.AppConfig{
 		Alert: originConfig.Alert,

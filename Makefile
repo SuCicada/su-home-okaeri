@@ -6,7 +6,7 @@ deploy-home:
 	make docker-su-home-okaeri
 
 dev:
-	aira
+	air
 
 include ../SuConfig/linux/asus/config.mk
 include ../SuConfig/deploy/import.mk

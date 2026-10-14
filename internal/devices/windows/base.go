@@ -2,6 +2,7 @@ package windows
 
 import (
 	devicesstructs "sucicada/home/internal/structs/devices"
+	"time"
 )
 
 var Device = devicesstructs.DeviceBase{
@@ -12,8 +13,9 @@ var Device = devicesstructs.DeviceBase{
 			Controller: &sWindowsLight{},
 		},
 		Media: &devicesstructs.Control{
-			MqttId:     "media_windows",
-			Controller: WindowsMedia,
+			MqttId:       "media_windows",
+			Controller:   WindowsMedia,
+			PollInterval: 10 * time.Second,
 		},
 	},
 }

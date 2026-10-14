@@ -34,7 +34,7 @@ func init() {
 	core := zapcore.NewCore(
 		zapcore.NewConsoleEncoder(encoderCfg),
 		zapcore.AddSync(os.Stdout),
-		zapcore.DebugLevel,
+		logLevel(),
 	)
 
 	logger := zap.New(core,
@@ -45,6 +45,20 @@ func init() {
 	defer logger.Sync()
 	sugar = logger.Sugar()
 	//sugar.Info("logger init success")
+}
+
+// logLevel 默认 Info，不输出 Debug。需要时设置 LOG_LEVEL=debug。
+func logLevel() zapcore.Level {
+	switch strings.ToLower(os.Getenv("LOG_LEVEL")) {
+	case "debug":
+		return zapcore.DebugLevel
+	case "warn":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
+	default:
+		return zapcore.InfoLevel
+	}
 }
 
 // 从任意子文件路径向上找 go.mod 所在目录，即项目根目录

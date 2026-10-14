@@ -138,7 +138,7 @@ func Publish(topic string, payload interface{}) {
 	if len(logPayload) > 1000 {
 		logPayload = logPayload[:1000]
 	}
-	logger.Info(fmt.Sprintf("📨 发布消息: %s = %s", topic, logPayload))
+	logger.Debug(fmt.Sprintf("📨 发布消息: %s = %s", topic, logPayload))
 
 	if mqttClient == nil || !mqttClient.IsConnected() {
 		logger.Error("❌ 发布消息失败: MQTT 未连接")

@@ -31,16 +31,24 @@ func LoadConfig(configPath string) (*appconfig.AppConfig, error) {
 		logger.Error("yaml unmarshal error: ", err)
 		return nil, err
 	}
-	logger.Info("yaml load success: ", configPath)
+	logger.Debug("yaml load success: ", configPath)
 	// })
 	return config, nil
 }
 
 var preConfig *appconfig.AppConfig
-var CONFIG_PATH = "config.yaml"
 
+// var CONFIG_PATH = "config.yaml"
+
+func GetConfigPath() string {
+	CONFIG_FILE := os.Getenv("CONFIG_FILE")
+	if CONFIG_FILE == "" {
+		CONFIG_FILE = "config.yaml"
+	}
+	return CONFIG_FILE
+}
 func GetConfig() *appconfig.AppConfig {
-	var config, err = LoadConfig(CONFIG_PATH)
+	var config, err = LoadConfig(GetConfigPath())
 	if err != nil {
 		logger.Error("load config error: ", err)
 		return preConfig

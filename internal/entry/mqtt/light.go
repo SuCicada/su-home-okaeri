@@ -105,6 +105,7 @@ func publishLightState(deviceName string, stateTopic string) {
 		State:      state,
 		Brightness: status.Brightness,
 	}
+	logger.Debug("Publishing light state: ", payload)
 
 	mqttpkg.Publish(stateTopic, payload)
 }

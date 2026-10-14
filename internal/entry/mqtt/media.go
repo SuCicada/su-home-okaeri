@@ -2,10 +2,8 @@ package mqttentry
 
 import (
 	"encoding/json"
-	"fmt"
 	"sucicada/home/internal/app/media"
 	"sucicada/home/internal/cfg"
-	"sucicada/home/internal/consts"
 	"sucicada/home/internal/logger"
 	"sucicada/home/internal/mqttpkg"
 
@@ -23,36 +21,21 @@ type mediaTopics struct {
 }
 
 func RegisterMediaRoutes(r *mqttpkg.Router) {
-	type devicehandler struct {
-		device    string
-		getHandle func(deviceName string, topics mediaTopics) mqtt.MessageHandler
-	}
-	devicehandlers := []devicehandler{
-		{
-			device:    consts.DEVICE_WINDOWS,
-			getHandle: handleMediaWindows,
-		},
-		{
-			device:    consts.DEVICE_LINUX,
-			getHandle: handleMediaLinux,
-		},
-	}
-
-	for _, devicehandler := range devicehandlers {
-		device := deviceservice.GetDevice(devicehandler.device)
+	for _, device := range deviceservice.GetDevices() {
 		control := device.DeviceControl.Media
-		isOk := false
-		if control != nil {
-			topics := resolveMediaTopics(control)
-			if topics.Command != "" {
-				r.Subscribe(topics.Command, devicehandler.getHandle(device.Name, topics))
-				isOk = true
-			}
+		if control == nil {
+			continue
+		}
+		if _, ok := control.Controller.(devicesstructs.MediaController); !ok {
+			continue
 		}
 
-		if !isOk {
-			panic(fmt.Sprint("no Register media: ", device, control))
+		topics := resolveMediaTopics(control)
+		if topics.Command == "" {
+			continue
 		}
+
+		r.Subscribe(topics.Command, handleMediaCommand(device.Name, topics, control.PollInterval))
 	}
 }
 
@@ -64,60 +47,31 @@ func resolveMediaTopics(control *devicesstructs.Control) mediaTopics {
 	}
 }
 
-func handleMediaLinux(deviceName string, topics mediaTopics) mqtt.MessageHandler {
-	return func(client mqtt.Client, message mqtt.Message) {
-		logger.Info("Received linux media command: ", string(message.Payload()))
-		var command structs.MediaCommand
-		err := json.Unmarshal(message.Payload(), &command)
-		if err != nil {
-			logger.Error("Failed to unmarshal media command: ", err)
-			return
-		}
-
-		err = media.Execute(deviceName, command)
-		if err != nil {
-			logger.Error("Failed to execute media command: ", err)
-			return
-		}
-
-		status, err := media.GetStatus(deviceName)
-		if err != nil {
-			logger.Error("Failed to get media status: ", err)
-			return
-		}
-
-		if topics.Status != "" {
-			status.Thumbnail = nil
-			mqttpkg.Publish(topics.Status, status)
-		} else {
-			logger.Error("no status topic: ", deviceName)
-		}
-	}
-}
-
-// ==============================================================
-
-func handleMediaWindows(deviceName string, topics mediaTopics) mqtt.MessageHandler {
+func handleMediaCommand(deviceName string, topics mediaTopics, pollInterval time.Duration) mqtt.MessageHandler {
 	syncStatus := syncMediaStatus(deviceName, topics)
-	startStatusTicker(syncStatus, 10*time.Second)
+	if pollInterval > 0 {
+		startStatusTicker(syncStatus, pollInterval)
+	}
 
 	return func(client mqtt.Client, message mqtt.Message) {
-		logger.Info("Received media command: ", string(message.Payload()))
+		logger.Info("Received media command: ", deviceName, " ", string(message.Payload()))
 
 		var command structs.MediaCommand
-		err := json.Unmarshal(message.Payload(), &command)
-		if err != nil {
+		if err := json.Unmarshal(message.Payload(), &command); err != nil {
 			logger.Error("Failed to unmarshal media command: ", err)
 			return
 		}
 
-		err = media.Execute(deviceName, command)
-		if err != nil {
+		if err := media.Execute(deviceName, command); err != nil {
 			logger.Error("Failed to execute media command: ", err)
 			return
 		}
 
-		syncWithMultiTry(syncStatus)
+		if pollInterval > 0 {
+			syncWithMultiTry(syncStatus)
+			return
+		}
+		syncStatus()
 	}
 }
 
@@ -129,9 +83,11 @@ func syncMediaStatus(deviceName string, topics mediaTopics) func() {
 			return
 		}
 
-		if topics.Status != "" {
-			status.Thumbnail = nil
-			mqttpkg.Publish(topics.Status, status)
+		if topics.Status == "" {
+			logger.Error("no status topic: ", deviceName)
+			return
 		}
+		status.Thumbnail = nil
+		mqttpkg.Publish(topics.Status, status)
 	}
 }

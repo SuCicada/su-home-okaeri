@@ -5,6 +5,7 @@ import (
 	"sucicada/home/internal/cfg"
 	"sucicada/home/internal/devices"
 	mqttentry "sucicada/home/internal/entry/mqtt"
+	"sucicada/home/internal/logger"
 	"sucicada/home/internal/mqttpkg"
 	"sucicada/home/internal/util"
 	"sucicada/home/internal/util/tinyssh"
@@ -35,7 +36,8 @@ func main() {
 	// 加载环境变量
 	godotenv.Load()
 	// 加载YAML配置文件
-	cfg.LoadConfig("config.yaml")
+	logger.Info("Loading config file: ", cfg.GetConfigPath())
+	cfg.LoadConfig(cfg.GetConfigPath())
 
 	Init()
 	util.Server.InitExitSignal(Close)
