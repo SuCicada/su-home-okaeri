@@ -4,6 +4,7 @@ import (
 	"sucicada/home/internal/cfg"
 	"sucicada/home/internal/devices/linux"
 	"sucicada/home/internal/devices/mac"
+	"sucicada/home/internal/devices/raspberrypi"
 	"sucicada/home/internal/devices/redmi"
 	"sucicada/home/internal/devices/windows"
 	"sucicada/home/internal/logger"
@@ -16,6 +17,7 @@ var Devices = []devicesstructs.DeviceBase{
 	redmi.Device,
 	windows.Device,
 	mac.Device,
+	raspberrypi.Device,
 }
 
 func Init() {

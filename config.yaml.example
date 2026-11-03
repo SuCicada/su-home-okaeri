@@ -23,6 +23,15 @@ devices:
       light:
         high: 100
         low: 10
+  raspberrypi:
+    ssh:
+      host: ''
+      user: ''
+      port: 22
+    control:
+      light:
+        options:
+          tvctl_script: /home/peng/tv-control/tvctl.py
   windows:
     ssh:
       host: ''

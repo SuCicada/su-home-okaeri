@@ -23,6 +23,7 @@ type lightCommandPayload struct {
 
 func RegisterLightRoutes(r *mqttpkg.Router) {
 	for _, device := range deviceservice.GetDevices() {
+		logger.Info("Registering light routes for device: ", device.Name)
 		control := device.DeviceControl.Light
 		if control == nil {
 			continue
@@ -70,6 +71,7 @@ func handleLightCommand(deviceName string, stateTopic string) mqtt.MessageHandle
 }
 
 func executeLightCommand(deviceName string, payload *lightCommandPayload) error {
+	logger.Info("Executing light command: ", payload.State, payload.Brightness)
 	switch strings.ToUpper(payload.State) {
 	case "OFF":
 		//payload.Brightness = 0
