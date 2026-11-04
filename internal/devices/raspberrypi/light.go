@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"sucicada/home/internal/consts"
+	"sucicada/home/internal/logger"
 	"sucicada/home/internal/structs"
 	commandstructs "sucicada/home/internal/structs/command"
 )
@@ -61,6 +62,7 @@ func (l *sRaspberryPiLight) Off() error {
 
 func runTVCtl(action string) (string, error) {
 	script, err := tvctlScript()
+	logger.Debug("script: %s, action: %s", script, action)
 	if err != nil {
 		return "", err
 	}
@@ -81,11 +83,11 @@ func parsePower(out string) (bool, error) {
 	if len(fields) == 0 {
 		return false, fmt.Errorf("empty tvctl status")
 	}
-
+	logger.Debug("fields: %v, out: %s", fields, out)
 	switch fields[len(fields)-1] {
 	case "on", "1", "true":
 		return true, nil
-	case "off", "0", "false", "unkonwn":
+	case "off", "0", "false", "unknown":
 		return false, nil
 	default:
 		return false, fmt.Errorf("unknown tvctl status: %s", strings.TrimSpace(out))

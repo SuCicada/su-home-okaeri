@@ -49,24 +49,25 @@ func handleLightCommand(deviceName string, stateTopic string) mqtt.MessageHandle
 	startStatusTicker(publishStatus, 10*time.Second)
 
 	return func(client mqtt.Client, message mqtt.Message) {
-		payload := lightCommandPayload{}
-		logger.Info("Received light command: ", string(message.Payload()))
+		// paho 默认按顺序分发消息，回调返回后才会 ACK。
+		// tvctl 要十几秒，再在这里 Publish().Wait() 会把整条 MQTT 接收卡住。
+		payloadBytes := append([]byte(nil), message.Payload()...)
+		go func() {
+			payload := lightCommandPayload{}
+			logger.Info("Received light command: ", string(payloadBytes))
 
-		if err := json.Unmarshal(message.Payload(), &payload); err != nil {
-			logger.Error("Failed to unmarshal light command: ", err)
-			return
-		}
+			if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+				logger.Error("Failed to unmarshal light command: ", err)
+				return
+			}
 
-		if err := executeLightCommand(deviceName, &payload); err != nil {
-			logger.Error("Failed to execute light command: ", err)
-			return
-		}
+			if err := executeLightCommand(deviceName, &payload); err != nil {
+				logger.Error("Failed to execute light command: ", err)
+				return
+			}
 
-		// publishLightState(deviceName, stateTopic)
-		syncWithMultiTry(publishStatus)
-		//if stateTopic != "" {
-		//	mqttpkg.Publish(stateTopic, payload)
-		//}
+			syncWithMultiTry(publishStatus)
+		}()
 	}
 }
 
